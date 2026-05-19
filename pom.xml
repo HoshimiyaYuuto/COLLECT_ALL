@@ -61,7 +61,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                program.intro_to_cs_lab_final_project/program.intro_to_cs_lab_final_project.HelloApplication
+                                program.intro_to_cs_lab_final_project/program.intro_to_cs_lab_final_project.Main
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
