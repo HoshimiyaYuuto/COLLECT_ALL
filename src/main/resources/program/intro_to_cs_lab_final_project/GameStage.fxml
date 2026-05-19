@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="program.intro_to_cs_lab_final_project.Controller">
+    <top>
+        <HBox alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+            <children>
+                <Label fx:id="scoreLabel" alignment="BOTTOM_CENTER" contentDisplay="CENTER" text="SCORE: 00000">
+                    <font>
+                        <Font name="Courier New" size="20.0" />
+                    </font>
+                    <HBox.margin>
+                        <Insets left="20.0" />
+                    </HBox.margin>
+                </Label>
+                <Region HBox.hgrow="ALWAYS" />
+                <ImageView fx:id="clockImage" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true" />
+                <Label fx:id="clockLabel" text="00:00">
+                    <font>
+                        <Font name="Courier New" size="20.0" />
+                    </font>
+                    <HBox.margin>
+                        <Insets left="10.0" right="20.0" />
+                    </HBox.margin>
+                </Label>
+                <ImageView fx:id="selectImage" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true" />
+            </children>
+        </HBox>
+    </top>
+
+    <center>
+        <GridPane fx:id="mapGrid" alignment="CENTER" BorderPane.alignment="CENTER">
+        </GridPane>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER" prefHeight="40.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+            <children>
+                <Label text="[WASD]: 移動 | [Space]: 攻擊/破冰" textFill="#666666">
+                    <font>
+                        <Font name="Courier New" size="14.0" />
+                    </font>
+                </Label>
+            </children>
+        </HBox>
+    </bottom>
+</BorderPane>
