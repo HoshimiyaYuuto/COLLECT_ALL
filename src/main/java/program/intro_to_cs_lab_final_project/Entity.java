@@ -1,34 +1,37 @@
 package program.intro_to_cs_lab_final_project;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.util.Duration;
 
 public class Entity {
-    protected int col, row;          // 網格座標
-    protected ImageView imageView;  // 顯示在畫面上的節點
+    protected int col, row;
+    protected ImageView imageView;
     protected int tileSize = 32;
+
+    private boolean isMoving = false;
+    private int currentFrame = 0;
+    private int lastTextureX = 0;
 
     public Entity(String imagePath, int startCol, int startRow) {
         this.col = startCol;
         this.row = startRow;
 
-        // 加上防爆盾牌
         var inputStream = getClass().getResourceAsStream(imagePath);
         if (inputStream == null) {
-            System.err.println("❌ 實體載入失敗！找不到圖片，具體路徑為: " + imagePath);
-            System.err.println("👉 請檢查：1. 圖片檔案是否存在？ 2. 大小寫有沒有完全拼對？");
-
-            // 隨便塞一張保險圖，不要讓整個遊戲在載入時因為找不到圖而閃退
-            // 這裡假設你的 TilesetFloor.png 是一定存在的
+            System.err.println("❌ 實體載入失敗！找不到圖片: " + imagePath);
             inputStream = getClass().getResourceAsStream("/program/intro_to_cs_lab_final_project/Tilesets/TilesetFloor.png");
         }
 
         Image sprite = new Image(inputStream);
         this.imageView = new ImageView(sprite);
 
-        // 預設切出第一幀正面靜止的圖 (0, 0, 16, 16)
+        // 預設面向
         this.imageView.setViewport(new Rectangle2D(0, 0, 16, 16));
 
         this.imageView.setFitWidth(tileSize);
@@ -36,34 +39,93 @@ public class Entity {
         this.imageView.setSmooth(false);
     }
 
-    // 讓生物動態加入到 GridPane 的方法
     public void addToMap(GridPane mapGrid) {
         mapGrid.add(this.imageView, this.col, this.row);
     }
 
-    // 基礎移動邏輯：如果新格子可以走，就搬過去並更新 ImageView 位置
-    public void moveTo(int newCol, int newRow, Map mapManager, GridPane mapGrid) {
-        if (mapManager.isWalkable(newCol, newRow)) {
-            // 從原本的格子移除舊位置
-            mapGrid.getChildren().remove(this.imageView);
+    public void moveSmoothly(int deltaCol, int deltaRow, Map mapManager, GridPane mapGrid, Runnable onFinishedCallback) {
+        if (isMoving) return;
 
-            this.col = newCol;
-            this.row = newRow;
+        int targetCol = this.col + deltaCol;
+        int targetRow = this.row + deltaRow;
 
-            // 重新塞到新的格子去
-            mapGrid.add(this.imageView, this.col, this.row);
+        // 以移動方向找尋 SpriteSheet.png 裁切位置
+        int textureX = getTextureXByDirection(deltaCol, deltaRow);
+        lastTextureX = textureX;
+
+        // 原地轉向
+        this.imageView.setViewport(new Rectangle2D(textureX, 0, 16, 16));
+
+        // 碰撞檢查
+        if (!mapManager.isWalkable(targetCol, targetRow)) {
+            if (onFinishedCallback != null) onFinishedCallback.run();
+            return;
         }
+
+        isMoving = true;
+
+        // 輪播角色移動圖像
+        Timeline walkAnimation = new Timeline(new KeyFrame(Duration.millis(40), event -> {
+            currentFrame = (currentFrame + 1) % 4; // 4 幀輪播
+            int textureY = currentFrame * 16;
+            this.imageView.setViewport(new Rectangle2D(textureX, textureY, 16, 16));
+        }));
+        walkAnimation.setCycleCount(Timeline.INDEFINITE);
+        walkAnimation.play();
+
+        // 平滑像素位移(移動速度調整區塊)
+        TranslateTransition transition = new TranslateTransition(Duration.millis(150), this.imageView);
+
+        double moveDistanceX = deltaCol * tileSize;
+        double moveDistanceY = deltaRow * tileSize;
+
+        transition.setByX(moveDistanceX);
+        transition.setByY(moveDistanceY);
+
+        // 動畫結束
+        transition.setOnFinished(event -> {
+            walkAnimation.stop();
+
+            // 歸位網格邏輯座標
+            this.col = targetCol;
+            this.row = targetRow;
+
+            // 歸零相對位移量，真正重新移入 GridPane 網格
+            this.imageView.setTranslateX(0);
+            this.imageView.setTranslateY(0);
+            mapGrid.getChildren().remove(this.imageView);
+            mapGrid.add(this.imageView, this.col, this.row);
+
+            // 靜止時顯示在 SpriteSheet.png 之 row0 樣貌
+            this.imageView.setViewport(new Rectangle2D(lastTextureX, 0, 16, 16));
+
+            isMoving = false;
+
+            if (onFinishedCallback != null) {
+                onFinishedCallback.run();
+            }
+        });
+
+        transition.play();
     }
 
+    // SpriteSheet.png 裁切對齊
+    private int getTextureXByDirection(int deltaCol, int deltaRow) {
+        if (deltaRow > 0) return 0;   // 往下：col 1 (X = 0)
+        if (deltaRow < 0) return 16;  // 往上：col 2 (X = 16)
+        if (deltaCol < 0) return 32;  // 往左：col 3 (X = 32)
+        if (deltaCol > 0) return 48;  // 往右：col 4 (X = 48)
+        return lastTextureX;
+    }
+
+    public boolean isMoving() { return isMoving; }
     public int getCol() { return col; }
     public int getRow() { return row; }
 
     public void updateScale(double newTileSize, GridPane mapGrid) {
-        // 1. 調整圖片的寬高
+        this.tileSize = (int) newTileSize;
         this.imageView.setFitWidth(newTileSize);
         this.imageView.setFitHeight(newTileSize);
-
-        // 2. 刷新它在 GridPane 裡的位置（強迫 JavaFX 重新排版）
         GridPane.setColumnIndex(this.imageView, this.col);
         GridPane.setRowIndex(this.imageView, this.row);
     }

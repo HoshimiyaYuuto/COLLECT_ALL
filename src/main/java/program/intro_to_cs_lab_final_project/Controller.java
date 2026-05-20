@@ -10,6 +10,8 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.Scene;
 
 public class Controller {
     @FXML
@@ -23,6 +25,13 @@ public class Controller {
     @FXML
     private GridPane mapGrid;
     private static String heroImageFile;
+
+    // 玩家移動邏輯變數
+    private boolean keyUp = false;
+    private boolean keyDown = false;
+    private boolean keyLeft = false;
+    private boolean keyRight = false;
+    private boolean isKeyProcessing = false;
 
     // 宣告專屬的經理物件
     private Map mapManager;
@@ -94,6 +103,7 @@ public class Controller {
             if (mapGrid.getScene() != null) {
                 javafx.scene.Scene scene = mapGrid.getScene();
 
+                // 排版計算邏輯
                 Runnable resizeGrid = () -> {
                     double sceneWidth = scene.getWidth();
                     double sceneHeight = scene.getHeight();
@@ -142,6 +152,61 @@ public class Controller {
 
                 // 視窗第一次打開時，先手動觸發一次對齊
                 resizeGrid.run();
+
+                // 監聽按下按鍵：打開對應方向開關
+                scene.setOnKeyPressed(event -> {
+                    switch (event.getCode()) {
+                        case W -> keyUp = true;
+                        case S -> keyDown = true;
+                        case A -> keyLeft = true;
+                        case D -> keyRight = true;
+                        default -> {}
+                    }
+                });
+
+                // 監聽放開按鍵：關閉對應方向開關
+                scene.setOnKeyReleased(event -> {
+                    switch (event.getCode()) {
+                        case W -> keyUp = false;
+                        case S -> keyDown = false;
+                        case A -> keyLeft = false;
+                        case D -> keyRight = false;
+                        default -> {}
+                    }
+                });
+
+                // 建立每 10 毫秒輪詢一次的連續移動主迴圈
+                javafx.animation.Timeline gameLoop = new javafx.animation.Timeline(
+                        new javafx.animation.KeyFrame(javafx.util.Duration.millis(10), e -> {
+                            // 如果角色正在平滑位移中，或者是按鍵鎖開著，就等待這次移動結束
+                            if (isKeyProcessing || player.isMoving()) return;
+
+                            int deltaCol = 0;
+                            int deltaRow = 0;
+
+                            // 判斷當前哪些按鍵被按住，決定走的方向
+                            if (keyUp) {
+                                deltaRow = -1;
+                            } else if (keyDown) {
+                                deltaRow = 1;
+                            } else if (keyLeft) {
+                                deltaCol = -1;
+                            } else if (keyRight) {
+                                deltaCol = 1;
+                            }
+
+                            // 有方向正在觸發，立即執行無縫平滑移動
+                            if (deltaCol != 0 || deltaRow != 0) {
+                                isKeyProcessing = true; // 上鎖
+
+                                player.moveSmoothly(deltaCol, deltaRow, mapManager, mapGrid, () -> {
+                                    isKeyProcessing = false; // 動畫結束，立刻解鎖
+                                });
+                            }
+                        })
+                );
+                gameLoop.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+                gameLoop.play();
             }
         });
     }
