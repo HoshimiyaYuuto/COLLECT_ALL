@@ -12,41 +12,51 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 public class Controller {
-
-    // ==========================================
-    // FXML 畫面元件
-    // ==========================================
-    @FXML private Label scoreLabel;
-    @FXML private Label clockLabel;
-    @FXML private ImageView clockImage;
-    @FXML private ImageView selectImage;
-    @FXML private GridPane mapGrid;
-
-    // 用 static 確保換幕後資料不會丟失（預設為光頭哥 SpriteSheet.png）
-    private static String heroImageFile = "SpriteSheet.png";
+    @FXML
+    private Label scoreLabel;
+    @FXML
+    private Label clockLabel;
+    @FXML
+    private ImageView clockImage;
+    @FXML
+    private ImageView selectImage;
+    @FXML
+    private GridPane mapGrid;
+    private static String heroImageFile;
 
     // 宣告專屬的經理物件
     private Map mapManager;
     private Entity player;
     private Entity slime;
 
-    // ==========================================
-    // 處理選單（menu.fxml）按鈕點擊
-    // ==========================================
+    // 處理選單FXML檔
     @FXML
     private void handleCharacterSelect(ActionEvent event) throws Exception {
         Button clickedButton = (Button) event.getSource();
         String btnText = clickedButton.getText().trim();
 
-        // Controller.java 裡面的暫時防呆設定：
+        // 擷取主角圖像
         switch (btnText) {
-            case "Bald":      heroImageFile = "SpriteSheet.png"; break;
-            case "Flameman":  heroImageFile = "SpriteSheet.png"; break; // 先用光頭哥頂著
-            case "Frozenman": heroImageFile = "SpriteSheet.png"; break;
-            case "Mage":      heroImageFile = "SpriteSheet.png"; break;
-            case "Robot":     heroImageFile = "SpriteSheet.png"; break;
-            case "Samurai":   heroImageFile = "SpriteSheet.png"; break;
-            default:          heroImageFile = "SpriteSheet.png"; break;
+            case "Bald":
+                heroImageFile = "Bald/SpriteSheet.png";
+                break;
+            case "Flameman":
+                heroImageFile = "Flameman/SpriteSheet.png";
+                break;
+            case "Frozenman":
+                heroImageFile = "Frozenman/SpriteSheet.png";
+                break;
+            case "Mage":
+                heroImageFile = "Mage/SpriteSheet.png";
+                break;
+            case "Robot":
+                heroImageFile = "Robot/SpriteSheet.png";
+                break;
+            case "Samurai":
+                heroImageFile = "Samurai/SpriteSheet.png";
+                break;
+            default:
+                break;
         }
 
         // 切換到 GameStage.fxml 畫面
@@ -58,32 +68,81 @@ public class Controller {
         window.getScene().setRoot(gameView);
     }
 
-    // ==========================================
-    // 遊戲畫面初始化（GameStage.fxml 被載入時自動觸發）
-    // ==========================================
+    // 遊戲初始化
     @FXML
     public void initialize() {
-        // 如果是在選單畫面，mapGrid 是 null，就直接跳出不執行
-        if (mapGrid == null) {
-            return;
-        }
-
-        System.out.println("🎮 遊戲大腦啟動！目前選擇主角: " + heroImageFile);
+        if (mapGrid == null) return;
 
         mapManager = new Map();
+
+        // 初始化地圖與實體
+        mapManager.updateTileSize(512.0);
         mapManager.render(mapGrid);
 
         String baseCharacterDir = "/program/intro_to_cs_lab_final_project/Character/";
         String baseMonsterDir = "/program/intro_to_cs_lab_final_project/Monster/";
-
-
         player = new Entity(baseCharacterDir + heroImageFile, 1, 1);
+        slime = new Entity(baseMonsterDir + "Slime.png", 14, 10);
+
+        player.updateScale(mapManager.getTileSize(), mapGrid);
+        slime.updateScale(mapManager.getTileSize(), mapGrid);
         player.addToMap(mapGrid);
-
-
-        slime = new Entity(baseMonsterDir + "Slime.png", 7, 1);
         slime.addToMap(mapGrid);
 
-        System.out.println("🎉 靜態地圖鋪設完畢，且角色與怪物已成功生成！");
+        // 監聽畫面寬高
+        javafx.application.Platform.runLater(() -> {
+            if (mapGrid.getScene() != null) {
+                javafx.scene.Scene scene = mapGrid.getScene();
+
+                Runnable resizeGrid = () -> {
+                    double sceneWidth = scene.getWidth();
+                    double sceneHeight = scene.getHeight();
+
+                    // 邊界留白
+                    double availableWidth = sceneWidth - 100;   // 左右各留 50
+                    double availableHeight = sceneHeight - 180; // 上下扣掉計分板與提示欄
+
+                    if (availableWidth < 200) availableWidth = 200;
+                    if (availableHeight < 150) availableHeight = 150;
+
+                    // 依據 16:12比例計算
+                    double widthBasedOnWidth = availableWidth;
+                    double widthBasedOnHeight = availableHeight * (16.0 / 12.0);
+                    // 兩者取小值以確保寬或高任何一方都不會超出邊界
+                    double finalGridWidth = Math.min(widthBasedOnWidth, widthBasedOnHeight);
+
+                    // 限制地圖的最終極限，不要無限放大或縮到看不見
+                    if (finalGridWidth < 320) finalGridWidth = 320;
+                    if (finalGridWidth > 800) finalGridWidth = 800;
+
+                    // 算出對應的最終高度
+                    double finalGridHeight = (finalGridWidth / 16.0) * 12.0;
+
+                    // 強制鎖定 GridPane 的四維尺寸，破除變形魔咒，也能自由縮小！
+                    mapGrid.setMaxWidth(finalGridWidth);
+                    mapGrid.setMaxHeight(finalGridHeight);
+                    mapGrid.setMinWidth(finalGridWidth);
+                    mapGrid.setMinHeight(finalGridHeight);
+
+                    // 重新刷新地圖與角色
+                    mapManager.updateTileSize(finalGridWidth);
+                    mapManager.render(mapGrid);
+
+                    player.updateScale(mapManager.getTileSize(), mapGrid);
+                    slime.updateScale(mapManager.getTileSize(), mapGrid);
+
+                    // 重新把角色和怪物塞回網格
+                    if (!mapGrid.getChildren().contains(player.imageView)) player.addToMap(mapGrid);
+                    if (!mapGrid.getChildren().contains(slime.imageView)) slime.addToMap(mapGrid);
+                };
+
+                // 觸發寬高計算邏輯
+                scene.widthProperty().addListener((obs, oldVal, newVal) -> resizeGrid.run());
+                scene.heightProperty().addListener((obs, oldVal, newVal) -> resizeGrid.run());
+
+                // 視窗第一次打開時，先手動觸發一次對齊
+                resizeGrid.run();
+            }
+        });
     }
 }

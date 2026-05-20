@@ -8,7 +8,7 @@ import javafx.scene.layout.GridPane;
 public class Entity {
     protected int col, row;          // 網格座標
     protected ImageView imageView;  // 顯示在畫面上的節點
-    protected int tileSize = 48;
+    protected int tileSize = 32;
 
     public Entity(String imagePath, int startCol, int startRow) {
         this.col = startCol;
@@ -57,4 +57,14 @@ public class Entity {
 
     public int getCol() { return col; }
     public int getRow() { return row; }
+
+    public void updateScale(double newTileSize, GridPane mapGrid) {
+        // 1. 調整圖片的寬高
+        this.imageView.setFitWidth(newTileSize);
+        this.imageView.setFitHeight(newTileSize);
+
+        // 2. 刷新它在 GridPane 裡的位置（強迫 JavaFX 重新排版）
+        GridPane.setColumnIndex(this.imageView, this.col);
+        GridPane.setRowIndex(this.imageView, this.row);
+    }
 }
