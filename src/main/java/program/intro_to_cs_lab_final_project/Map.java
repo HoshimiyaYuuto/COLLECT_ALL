@@ -47,6 +47,14 @@ public class Map {
         return this.tileSize;
     }
 
+    // 回傳方塊型別
+    public int getTileType(int col, int row) {
+        if (row < 0 || row >= gameMap.length || col < 0 || col >= gameMap[0].length) {
+            return -1;
+        }
+        return gameMap[row][col];
+    }
+
     // 只要格子不是 0 (沙地)，就通通視為不可穿透的障礙物
     public boolean isWalkable(int col, int row) {
         if (row < 0 || row >= gameMap.length || col < 0 || col >= gameMap[0].length) {
@@ -85,41 +93,41 @@ public class Map {
                     mapGrid.add(wallView, col, row);
                 }
                 else if (type == 2) {
-                    // 2: 光頭哥技能: 水牆
+                    // 2: 光哥技能: 水牆
                     ImageView waterView = new ImageView(dungeonTileset);
                     waterView.setViewport(new Rectangle2D(0, 32, 16, 16));
                     styleTile(waterView);
                     mapGrid.add(waterView, col, row);
                 }
                 else if (type == 3) {
-                    // 3: 冰凍哥技能: 冰牆
+                    // 3: 冰結忍技能: 冰牆
                     ImageView iceView = new ImageView(dungeonTileset);
                     iceView.setViewport(new Rectangle2D(16, 32, 16, 16));
                     styleTile(iceView);
                     mapGrid.add(iceView, col, row);
                 }
                 else if (type == 4) {
-                    // 4: 火焰哥技能: 火焰
+                    // 4: 火燄忍技能: 火焰
                     ImageView fireView = new ImageView(flamemanFire);
                     styleTile(fireView);
                     mapGrid.add(fireView, col, row);
                 }
                 else if (type == 5) {
-                    // 5: 法師技能: 大靈球
+                    // 5: 法巫技能: 大靈球
                     ImageView mageView = new ImageView(dungeonTileset);
                     mageView.setViewport(new Rectangle2D(112, 32, 16, 16));
                     styleTile(mageView);
                     mapGrid.add(mageView, col, row);
                 }
                 else if (type == 6) {
-                    // 6: 機器人: 金屬鎖頭牆
+                    // 6: 機鉨鈦鎂: 金屬鎖頭牆
                     ImageView lockView = new ImageView(dungeonTileset);
                     lockView.setViewport(new Rectangle2D(0, 0, 16, 16));
                     styleTile(lockView);
                     mapGrid.add(lockView, col, row);
                 }
                 else if (type == 7) {
-                    // 7. 武士: 草牆
+                    // 7. 信長: 草牆
                     ImageView grassView = new ImageView(samuraiPlant);
                     styleTile(grassView);
                     mapGrid.add(grassView, col, row);

@@ -18,6 +18,9 @@ public class Entity {
     private int currentFrame = 0;
     private int lastTextureX = 0;
 
+    private int facingDeltaCol = 0;
+    private int facingDeltaRow = 1; // 預設朝下
+
     public Entity(String imagePath, int startCol, int startRow) {
         this.col = startCol;
         this.row = startRow;
@@ -31,7 +34,6 @@ public class Entity {
         Image sprite = new Image(inputStream);
         this.imageView = new ImageView(sprite);
 
-        // 預設面向
         this.imageView.setViewport(new Rectangle2D(0, 0, 16, 16));
 
         this.imageView.setFitWidth(tileSize);
@@ -49,31 +51,33 @@ public class Entity {
         int targetCol = this.col + deltaCol;
         int targetRow = this.row + deltaRow;
 
-        // 以移動方向找尋 SpriteSheet.png 裁切位置
+        // 記住施法朝向
+        this.facingDeltaCol = deltaCol;
+        this.facingDeltaRow = deltaRow;
+
         int textureX = getTextureXByDirection(deltaCol, deltaRow);
         lastTextureX = textureX;
 
-        // 原地轉向
         this.imageView.setViewport(new Rectangle2D(textureX, 0, 16, 16));
 
-        // 碰撞檢查
-        if (!mapManager.isWalkable(targetCol, targetRow)) {
+        // 只要對接點是通的，就允許前進
+        boolean isAttemptingTeleport = (targetCol < 0 || targetCol > 15 || targetRow < 0 || targetRow > 11);
+
+        if (!isAttemptingTeleport && !mapManager.isWalkable(targetCol, targetRow)) {
             if (onFinishedCallback != null) onFinishedCallback.run();
             return;
         }
 
         isMoving = true;
 
-        // 輪播角色移動圖像
         Timeline walkAnimation = new Timeline(new KeyFrame(Duration.millis(40), event -> {
-            currentFrame = (currentFrame + 1) % 4; // 4 幀輪播
+            currentFrame = (currentFrame + 1) % 4;
             int textureY = currentFrame * 16;
             this.imageView.setViewport(new Rectangle2D(textureX, textureY, 16, 16));
         }));
         walkAnimation.setCycleCount(Timeline.INDEFINITE);
         walkAnimation.play();
 
-        // 平滑像素位移(移動速度調整區塊)
         TranslateTransition transition = new TranslateTransition(Duration.millis(150), this.imageView);
 
         double moveDistanceX = deltaCol * tileSize;
@@ -82,21 +86,21 @@ public class Entity {
         transition.setByX(moveDistanceX);
         transition.setByY(moveDistanceY);
 
-        // 動畫結束
         transition.setOnFinished(event -> {
             walkAnimation.stop();
 
-            // 歸位網格邏輯座標
             this.col = targetCol;
             this.row = targetRow;
 
-            // 歸零相對位移量，真正重新移入 GridPane 網格
             this.imageView.setTranslateX(0);
             this.imageView.setTranslateY(0);
             mapGrid.getChildren().remove(this.imageView);
-            mapGrid.add(this.imageView, this.col, this.row);
 
-            // 靜止時顯示在 SpriteSheet.png 之 row0 樣貌
+            // 如果還沒觸發傳送門（還在普通地圖內），就正常塞回網格
+            if (this.col >= 0 && this.col <= 15 && this.row >= 0 && this.row <= 11) {
+                mapGrid.add(this.imageView, this.col, this.row);
+            }
+
             this.imageView.setViewport(new Rectangle2D(lastTextureX, 0, 16, 16));
 
             isMoving = false;
@@ -109,18 +113,24 @@ public class Entity {
         transition.play();
     }
 
-    // SpriteSheet.png 裁切對齊
     private int getTextureXByDirection(int deltaCol, int deltaRow) {
-        if (deltaRow > 0) return 0;   // 往下：col 1 (X = 0)
-        if (deltaRow < 0) return 16;  // 往上：col 2 (X = 16)
-        if (deltaCol < 0) return 32;  // 往左：col 3 (X = 32)
-        if (deltaCol > 0) return 48;  // 往右：col 4 (X = 48)
+        if (deltaRow > 0) return 0;
+        if (deltaRow < 0) return 16;
+        if (deltaCol < 0) return 32;
+        if (deltaCol > 0) return 48;
         return lastTextureX;
     }
 
     public boolean isMoving() { return isMoving; }
     public int getCol() { return col; }
     public int getRow() { return row; }
+
+    // 🔑 新增的 Setter，專門用來讓傳送門重置座標
+    public void setCol(int col) { this.col = col; }
+    public void setRow(int row) { this.row = row; }
+
+    public int getFacingDeltaCol() { return facingDeltaCol; }
+    public int getFacingDeltaRow() { return facingDeltaRow; }
 
     public void updateScale(double newTileSize, GridPane mapGrid) {
         this.tileSize = (int) newTileSize;
