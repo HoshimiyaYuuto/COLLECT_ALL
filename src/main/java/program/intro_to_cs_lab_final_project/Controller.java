@@ -68,7 +68,7 @@ public class Controller {
     // 主選單：離開遊戲
     @FXML
     private void handleExitGame(ActionEvent event) {
-        Stage stage = (Stage) ExitGame.getscene().getWindow();
+        Stage stage = (Stage) ExitGame.getScene().getWindow();
         stage.close();
     }
 
