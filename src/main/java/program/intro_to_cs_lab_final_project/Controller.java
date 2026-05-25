@@ -39,6 +39,14 @@ public class Controller {
     private Entity slime;
     private SkillManager skillManager;
 
+    private boolean isSpacePressed = false; // 防 SPACE 鬼畜連發鎖
+    private long keyPressStartTime = 0;      // 紀錄 WASD 按下的時間點
+    private KeyCode currentMovingKey = null; // 目前主導移動的按鍵
+    private long lastSkillCastTime = 0;      // 紀錄上一次成功放招的時間戳記（毫秒）
+    private final long SKILL_COOLDOWN = 250;  // 技能冷卻時間(ms)
+    private long lastEnvTickTime = 0;         // 紀錄上一次環境動態更新的時間點
+    private final long ENV_TICK_INTERVAL = 3000;
+
     // 處理選單FXML檔
     @FXML
     private void handleCharacterSelect(ActionEvent event) throws Exception {
@@ -144,30 +152,56 @@ public class Controller {
 
                 // 監聽按下按鍵：打開方向，或者觸發單次施法
                 scene.setOnKeyPressed(event -> {
-                    switch (event.getCode()) {
-                        case W -> keyUp = true;
-                        case S -> keyDown = true;
-                        case A -> keyLeft = true;
-                        case D -> keyRight = true;
+                    KeyCode code = event.getCode();
 
-                        // 空白鍵：生成/摧毀方塊
+                    // 轉向優先邏輯：一按下 WASD，立刻強迫角色轉向，並記錄時間
+                    if (code == KeyCode.W || code == KeyCode.S || code == KeyCode.A || code == KeyCode.D) {
+                        if (currentMovingKey != code) {
+                            currentMovingKey = code;
+                            keyPressStartTime = System.currentTimeMillis(); // 記錄按下起點
+                        }
+
+                        // 根據按鍵直接先改角色的面向，這樣玩家輕點就能原地轉身！
+                        switch (code) {
+                            case W -> { keyUp = true;    player.setFacing(0, -1); }
+                            case S -> { keyDown = true;  player.setFacing(0, 1); }
+                            case A -> { keyLeft = true;  player.setFacing(-1, 0); }
+                            case D -> { keyRight = true; player.setFacing(1, 0); }
+                            default -> {}
+                        }
+                    }
+
+                    // 讀取空白鍵反應(生成/摧毀技能方塊)
+                    switch (code) {
                         case SPACE -> {
-                            if (!player.isMoving()) {
-                                String heroName = heroImageFile.split("/")[0];
+                            // 雙重鎖：除了防長按連發（!isSpacePressed），還要檢查冷卻時間有沒有到！
+                            if (!isSpacePressed && !player.isMoving()) {
 
-                                // 探查前方第一格的方塊型態
+                                // 時間檢查：如果距離上次放招還不到 250 毫秒，直接無情攔截，不准放！
+                                long currentTime = System.currentTimeMillis();
+                                if (currentTime - lastSkillCastTime < SKILL_COOLDOWN) {
+                                    break;
+                                }
+
+                                isSpacePressed = true; // 鎖定長按
+                                lastSkillCastTime = currentTime; // 蓋章！更新本次成功放招的時間點
+
+                                String heroName = heroImageFile.split("/")[0];
                                 int targetCol = player.getCol() + player.getFacingDeltaCol();
                                 int targetRow = player.getRow() + player.getFacingDeltaRow();
                                 int frontTile = mapManager.getTileType(targetCol, targetRow);
                                 int myHeroTile = skillManager.getHeroTileType(heroName);
 
-                                // 如果前方那一格剛好就是自己能拆的屬性方塊就觸發摧毀
-                                if (frontTile == myHeroTile) {
+                                boolean isSlimeStandingThere = (targetCol == slime.getCol() && targetRow == slime.getRow());
+                                if (frontTile == myHeroTile && !isSlimeStandingThere) {
                                     skillManager.castDestroySkill(player, heroName);
                                 } else {
-                                    // 否則一律視為往前釋放/生成方塊！
                                     skillManager.castCreateSkill(player, slime, heroName);
                                 }
+
+                                // 施法完畢後補畫角色和怪物
+                                if (!mapGrid.getChildren().contains(player.imageView)) player.addToMap(mapGrid);
+                                if (!mapGrid.getChildren().contains(slime.imageView)) slime.addToMap(mapGrid);
                             }
                         }
                         default -> {}
@@ -176,23 +210,47 @@ public class Controller {
 
                 // 監聽放開按鍵
                 scene.setOnKeyReleased(event -> {
-                    switch (event.getCode()) {
+                    KeyCode code = event.getCode();
+
+                    if (code == currentMovingKey) {
+                        currentMovingKey = null; // 清空移動主導鍵
+                        keyPressStartTime = 0;
+                    }
+
+                    switch (code) {
                         case W -> keyUp = false;
                         case S -> keyDown = false;
                         case A -> keyLeft = false;
                         case D -> keyRight = false;
+                        case SPACE -> isSpacePressed = false; // 👑 放開空白鍵時，解除冷卻鎖！
                         default -> {}
                     }
                 });
 
-                // 建立連續移動主迴圈
+                // 建立連續移動主迴圈（加入長按判定）
                 javafx.animation.Timeline gameLoop = new javafx.animation.Timeline(
                         new javafx.animation.KeyFrame(javafx.util.Duration.millis(10), e -> {
+
+                            // 🌍 核心新增：每 500 毫秒叫醒 skillManager 檢查全地圖的「草吸水」與「水/冰滅火」
+                            long currentTime = System.currentTimeMillis();
+                            if (currentTime - lastEnvTickTime >= ENV_TICK_INTERVAL) {
+                                skillManager.updateEnvironmentTick(player, slime); // 呼叫我們之前寫好的環境大巡邏
+                                lastEnvTickTime = currentTime;        // 更新時間戳記
+                            }
+
+                            // ----------------- 以下是妳原本完好無動的 WASD 移動邏輯 -----------------
                             if (isKeyProcessing || player.isMoving()) return;
+
+                            // 長按起跑安全閥：檢查按鍵時間是否超過 120 毫秒。
+                            if (currentMovingKey != null && keyPressStartTime > 0) {
+                                long duration = System.currentTimeMillis() - keyPressStartTime;
+                                if (duration < 120) return; // 蓄力時間不夠，攔截，不准走！
+                            }
 
                             int deltaCol = 0;
                             int deltaRow = 0;
 
+                            // 依照目前的按鍵決定移動方向
                             if (keyUp) deltaRow = -1;
                             else if (keyDown) deltaRow = 1;
                             else if (keyLeft) deltaCol = -1;
@@ -204,14 +262,14 @@ public class Controller {
                                 int targetCol = currentCol + deltaCol;
                                 int targetRow = currentRow + deltaRow;
 
-                                // 傳送安全性檢查區塊
-                                if (targetCol < 0) { // 左出右入
+                                // 傳送安全性檢查區
+                                if (targetCol < 0) {
                                     if (mapManager.getTileType(0, currentRow) != 0 || mapManager.getTileType(15, currentRow) != 0) return;
-                                } else if (targetCol > 15) { // 右出左入
+                                } else if (targetCol > 15) {
                                     if (mapManager.getTileType(15, currentRow) != 0 || mapManager.getTileType(0, currentRow) != 0) return;
-                                } else if (targetRow < 0) { // 上出下入
+                                } else if (targetRow < 0) {
                                     if (mapManager.getTileType(currentCol, 0) != 0 || mapManager.getTileType(currentCol, 11) != 0) return;
-                                } else if (targetRow > 11) { // 下出上入
+                                } else if (targetRow > 11) {
                                     if (mapManager.getTileType(currentCol, 11) != 0 || mapManager.getTileType(currentCol, 0) != 0) return;
                                 }
 
@@ -224,7 +282,6 @@ public class Controller {
                                     int pRow = player.getRow();
                                     boolean teleported = false;
 
-                                    // 安全執行傳送門座標重置
                                     if (pCol < 0) { pCol = 15; teleported = true; }
                                     else if (pCol > 15) { pCol = 0; teleported = true; }
 
@@ -234,8 +291,14 @@ public class Controller {
                                     if (teleported) {
                                         player.setCol(pCol);
                                         player.setRow(pRow);
-                                        mapGrid.getChildren().remove(player.imageView);
-                                        mapGrid.add(player.imageView, pCol, pRow);
+
+                                        final int finalCol = pCol;
+                                        final int finalRow = pRow;
+
+                                        javafx.application.Platform.runLater(() -> {
+                                            mapGrid.getChildren().remove(player.imageView);
+                                            mapGrid.add(player.imageView, finalCol, finalRow);
+                                        });
                                     }
                                 });
                             }

@@ -12,9 +12,9 @@ public class Map {
     private final int[][] gameMap = {
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
             {1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 1, 1, 2, 3, 4, 5, 6, 7, 0, 0, 1, 1, 0, 1},   //方塊測試
+            {1, 0, 1, 1, 2, 0, 3, 5, 6, 0, 4, 0, 1, 1, 0, 1},   //方塊測試
             {1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1},
             {1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -26,8 +26,8 @@ public class Map {
 
     private Image floorTileset;
     private Image dungeonTileset;
-    private Image flamemanFire;      // 🔥 Flameman 的火靈單圖
-    private Image samuraiPlant;   // 🌿 Samurai 的自然草皮大圖
+    private Image flamemanFire;   // 火堆單圖
+    private Image samuraiPlant;   // 草堆單圖
 
     public Map() {
         String tilesetDir = "/program/intro_to_cs_lab_final_project/Tilesets/";

@@ -125,7 +125,7 @@ public class Entity {
     public int getCol() { return col; }
     public int getRow() { return row; }
 
-    // 🔑 新增的 Setter，專門用來讓傳送門重置座標
+    // 新增的 Setter，專門用來讓傳送門重置座標
     public void setCol(int col) { this.col = col; }
     public void setRow(int row) { this.row = row; }
 
@@ -138,5 +138,27 @@ public class Entity {
         this.imageView.setFitHeight(newTileSize);
         GridPane.setColumnIndex(this.imageView, this.col);
         GridPane.setRowIndex(this.imageView, this.row);
+    }
+
+    // 按方向鍵先轉彎
+    public void setFacing(int deltaCol, int deltaRow) {
+        // 只有在角色沒有正在移動時，才允許原地轉向
+        if (isMoving) return;
+
+        // 更新施法與朝向的紀錄
+        this.facingDeltaCol = deltaCol;
+        this.facingDeltaRow = deltaRow;
+
+        // 根據方向計算角色圖的 X 軸切片位置
+        int textureX = getTextureXByDirection(deltaCol, deltaRow);
+        lastTextureX = textureX;
+
+        // 瞬間切換角色的圖片外觀（回到該方向的第 0 幀靜止畫面）
+        this.imageView.setViewport(new Rectangle2D(textureX, 0, 16, 16));
+    }
+
+    // 外部直接取得目前動態計算後的單格尺寸（供 Controller 或 SkillManager 參考）
+    public int getTileSize() {
+        return this.tileSize;
     }
 }
