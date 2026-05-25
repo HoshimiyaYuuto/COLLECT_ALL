@@ -9,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.Scene;
@@ -25,6 +26,14 @@ public class Controller {
     @FXML
     private GridPane mapGrid;
     private static String heroImageFile;
+    @FXML
+    private VBox MainMenu;
+    @FXML
+    private Button StartGame;
+    @FXML
+    private Button ExitGame;
+    @FXML
+    private VBox SelectHero;
 
     // 玩家移動邏輯變數
     private boolean keyUp = false;
@@ -46,6 +55,22 @@ public class Controller {
     private final long SKILL_COOLDOWN = 250;  // 技能冷卻時間(ms)
     private long lastEnvTickTime = 0;         // 紀錄上一次環境動態更新的時間點
     private final long ENV_TICK_INTERVAL = 3000;
+
+    // 主選單：開始遊戲
+    @FXML
+    private void handleStartGame(ActionEvent event) {
+        // 音效！！
+
+        MainMenu.setVisible(false);
+        SelectHero.setVisible(true);
+    }
+
+    // 主選單：離開遊戲
+    @FXML
+    private void handleExitGame(ActionEvent event) {
+        Stage stage = (Stage) exitGameBtn.getscene().getWindow();
+        stage.close;
+    }
 
     // 處理選單FXML檔
     @FXML
