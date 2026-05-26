@@ -18,7 +18,7 @@
             <Image url="@Background/StonyWall.jpg" />
          </image>
       </ImageView>
-      <VBox fx:id="MainMenu" alignment="CENTER" prefHeight="600.0" prefWidth="600.0" spacing="40.0" style="-fx-background-color: transparent;">
+      <VBox fx:id="MainMenu" alignment="CENTER" prefHeight="600.0" prefWidth="600.0" spacing="40.0" style="-fx-background-color: transparent;" visible="false">
          <children>
             <VBox alignment="CENTER" layoutX="30.0" layoutY="325.0" prefHeight="200.0" prefWidth="100.0">
                <children>
@@ -73,7 +73,7 @@
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </padding>
       </VBox>
-      <VBox fx:id="SelectHero" alignment="CENTER" prefHeight="600.0" prefWidth="600.0" spacing="40.0" style="-fx-background-color: transparent;" visible="false">
+      <VBox fx:id="SelectHero" alignment="CENTER" prefHeight="600.0" prefWidth="600.0" spacing="40.0" style="-fx-background-color: transparent;">
       
           <children>
             <Label alignment="TOP_CENTER" text="COLLECT ALL" textFill="#ecf0f1">
@@ -185,6 +185,18 @@
                   </VBox>
                </children>
             </VBox>
+             <HBox alignment="BOTTOM_LEFT" prefWidth="600.0">
+                <children>
+                   <Label fx:id="BackToMenu" mnemonicParsing="false" onMouseClicked="#handleBackToMenu" text="⬅ Back" textFill="#89ebfa">
+                      <font>
+                         <Font name="Berlin Sans FB Demi Bold" size="20.0" />
+                      </font>
+                      <HBox.margin>
+                         <Insets bottom="10.0" left="20.0" />
+                      </HBox.margin>
+                   </Label>
+                </children>
+             </HBox>
           </children>
       
           <padding>

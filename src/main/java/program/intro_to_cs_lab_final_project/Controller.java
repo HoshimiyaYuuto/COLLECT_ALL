@@ -12,6 +12,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.input.KeyCode;
+import javafx.scene.media.AudioClip;
 import javafx.scene.Scene;
 
 public class Controller {
@@ -34,6 +35,10 @@ public class Controller {
     private Button ExitGame;
     @FXML
     private VBox SelectHero;
+
+    private AudioClip clickSound;
+    private AudioClip closeSound;
+    private AudioClip selectHeroSound;
 
     // 玩家移動邏輯變數
     private boolean keyUp = false;
@@ -59,15 +64,29 @@ public class Controller {
     // 主選單：開始遊戲
     @FXML
     private void handleStartGame(ActionEvent event) {
-        // 音效！！
-
+        if (clickSound != null) {
+            clickSound.play();
+        }
         MainMenu.setVisible(false);
         SelectHero.setVisible(true);
+    }
+
+    // 從選角畫面返回主選單
+    @FXML
+    private void handleBackToMenu(javafx.scene.input.MouseEvent event) {
+//        if (clickSound != null) {
+//            clickSound.play();
+//        }
+        SelectHero.setVisible(false);
+        MainMenu.setVisible(true);
     }
 
     // 主選單：離開遊戲
     @FXML
     private void handleExitGame(ActionEvent event) {
+        if (closeSound != null) {
+            closeSound.play();
+        }
         Stage stage = (Stage) ExitGame.getScene().getWindow();
         stage.close();
     }
@@ -75,6 +94,10 @@ public class Controller {
     // 處理選單FXML檔
     @FXML
     private void handleCharacterSelect(ActionEvent event) throws Exception {
+        if (selectHeroSound != null) {
+            selectHeroSound.play();
+        }
+
         Button clickedButton = (Button) event.getSource();
         String btnText = clickedButton.getText().trim();
 
@@ -101,12 +124,24 @@ public class Controller {
     // 遊戲初始化
     @FXML
     public void initialize() {
-        if (mapGrid == null) return;
-//        if (mapGrid == null) {
-//            if (MainMenu != null) MainMenu.setVisible(true);
-//            if (SelectHero != null) SelectHero.setVisible(false);
-//            return;
-//        }
+//        if (mapGrid == null) return;
+        if (mapGrid == null) {
+            String clickPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Alert/Alert4.wav").toExternalForm();
+            clickSound = new AudioClip(clickPath);
+//            clickSound.setVolume(0.7);
+
+            String closePath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Menu/Menu12.wav").toExternalForm();
+            closeSound = new AudioClip(closePath);
+//            closeSound.setVolume(0.7);
+
+            String selectHeroPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Menu/Accept5.wav").toExternalForm();
+            selectHeroSound = new AudioClip(selectHeroPath);
+            closeSound.setVolume(0.6);
+
+            if (MainMenu != null) MainMenu.setVisible(true);
+            if (SelectHero != null) SelectHero.setVisible(false);
+            return;
+        }
 
         mapManager = new Map();
         skillManager = new SkillManager(mapManager, mapGrid);
