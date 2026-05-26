@@ -112,6 +112,13 @@ public class Controller {
 
         String baseCharacterDir = "/program/intro_to_cs_lab_final_project/Character/";
         String baseMonsterDir = "/program/intro_to_cs_lab_final_project/Monster/";
+
+        // ======遊戲內部邏輯功能驗證用，開發完成前不要刪=======
+        if (heroImageFile == null || heroImageFile.isEmpty()) {
+            heroImageFile = "Samurai/SpriteSheet.png";
+        }
+        // ===============================================
+
         player = new Entity(baseCharacterDir + heroImageFile, 1, 1);
         slime = new Entity(baseMonsterDir + "Slime.png", 14, 10);
 
