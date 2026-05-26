@@ -102,6 +102,11 @@ public class Controller {
     @FXML
     public void initialize() {
         if (mapGrid == null) return;
+//        if (mapGrid == null) {
+//            if (MainMenu != null) MainMenu.setVisible(true);
+//            if (SelectHero != null) SelectHero.setVisible(false);
+//            return;
+//        }
 
         mapManager = new Map();
         skillManager = new SkillManager(mapManager, mapGrid);
@@ -120,7 +125,7 @@ public class Controller {
         // ===============================================
 
         player = new Entity(baseCharacterDir + heroImageFile, 1, 1);
-        slime = new Entity(baseMonsterDir + "Slime.png", 14, 10);
+        slime = new Entity(baseMonsterDir + "Slime/Slime.png", 14, 10);
 
         player.updateScale(mapManager.getTileSize(), mapGrid);
         slime.updateScale(mapManager.getTileSize(), mapGrid);

@@ -18,7 +18,7 @@
             <Image url="@Background/StonyWall.jpg" />
          </image>
       </ImageView>
-      <VBox id="MainMenu" alignment="CENTER" prefHeight="600.0" prefWidth="600.0" spacing="40.0" style="-fx-background-color: transparent;">
+      <VBox fx:id="MainMenu" alignment="CENTER" prefHeight="600.0" prefWidth="600.0" spacing="40.0" style="-fx-background-color: transparent;">
          <children>
             <VBox alignment="CENTER" layoutX="30.0" layoutY="325.0" prefHeight="200.0" prefWidth="100.0">
                <children>
@@ -41,7 +41,7 @@
                         <DropShadow blurType="TWO_PASS_BOX" spread="1.0" />
                      </effect>
                   </Label>
-                  <Label text="- PLAIN EDITION -" textFill="#e74c3c">
+                  <Label text="- PLAIN EDITION -" textFill="#ff5040">
                      <font>
                         <Font name="Courier New Bold" size="20.0" />
                      </font>
@@ -53,12 +53,12 @@
             </VBox>
             <HBox alignment="CENTER" spacing="50.0">
                <children>
-                  <Button id="StartGame" mnemonicParsing="false" onAction="#handleStartGame" prefHeight="45.0" prefWidth="120.0" text="Start">
+                  <Button fx:id="StartGame" mnemonicParsing="false" onAction="#handleStartGame" prefHeight="45.0" prefWidth="120.0" text="Start">
                      <font>
                         <Font name="Berlin Sans FB Demi Bold" size="30.0" />
                      </font>
                   </Button>
-                  <Button id="ExitGame" mnemonicParsing="false" onAction="#handleExitGame" prefHeight="45.0" prefWidth="120.0" text="Exit">
+                  <Button fx:id="ExitGame" mnemonicParsing="false" onAction="#handleExitGame" prefHeight="45.0" prefWidth="120.0" text="Exit">
                      <font>
                         <Font name="Berlin Sans FB Demi Bold" size="30.0" />
                      </font>
@@ -73,7 +73,7 @@
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </padding>
       </VBox>
-      <VBox id="SelectHero" alignment="CENTER" prefHeight="600.0" prefWidth="600.0" spacing="40.0" style="-fx-background-color: transparent;" visible="false">
+      <VBox fx:id="SelectHero" alignment="CENTER" prefHeight="600.0" prefWidth="600.0" spacing="40.0" style="-fx-background-color: transparent;" visible="false">
       
           <children>
             <Label alignment="TOP_CENTER" text="COLLECT ALL" textFill="#ecf0f1">

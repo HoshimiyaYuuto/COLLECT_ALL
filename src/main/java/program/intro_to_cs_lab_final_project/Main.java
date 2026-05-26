@@ -11,7 +11,7 @@ import java.io.IOException;
 public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
-        String menuPath = "/program/intro_to_cs_lab_final_project/GameStage.fxml";
+        String menuPath = "/program/intro_to_cs_lab_final_project/Menu.fxml";
         Parent root = FXMLLoader.load(getClass().getResource(menuPath));
 
         primaryStage.setTitle("COLLECT ALL - PLAIN EDITION");
