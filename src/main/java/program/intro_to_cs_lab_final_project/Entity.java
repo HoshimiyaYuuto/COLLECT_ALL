@@ -161,4 +161,33 @@ public class Entity {
     public int getTileSize() {
         return this.tileSize;
     }
+
+    // 顯示出招動畫
+    public void setFacingBattlePose() {
+        if (this.imageView == null || this.imageView.getImage() == null) return;
+
+        // SpriteSheets 是 7 * 4
+        double singleWidth = this.imageView.getImage().getWidth() / 4.0;
+        double singleHeight = this.imageView.getImage().getHeight() / 7.0;
+
+        // 固定在第五排 (Row 4)
+        double y = 4 * singleHeight;
+        double x = 0;
+
+        // 根據目前面相切圖
+        if (this.facingDeltaRow > 0) {          // 向下
+            x = 0 * singleWidth;
+        } else if (this.facingDeltaRow < 0) {   // 向上
+            x = 1 * singleWidth;
+        } else if (this.facingDeltaCol < 0) {   // 向左
+            x = 2 * singleWidth;
+        } else if (this.facingDeltaCol > 0) {   // 向右
+            x = 3 * singleWidth;
+        } else {
+            // 防呆
+            x = 0 * singleWidth;
+        }
+
+        this.imageView.setViewport(new Rectangle2D(x, y, singleWidth, singleHeight));
+    }
 }

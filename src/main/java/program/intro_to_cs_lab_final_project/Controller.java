@@ -245,19 +245,25 @@ public class Controller {
 
                     // 讀取空白鍵反應(生成/摧毀技能方塊)
                     switch (code) {
+                        // 讀取空白鍵反應(生成/摧毀技能方塊)
                         case SPACE -> {
-                            // 雙重鎖：除了防長按連發（!isSpacePressed），還要檢查冷卻時間有沒有到！
-                            if (!isSpacePressed && !player.isMoving()) {
+                            // 防連發、防移動中施法、防施法中移動
+                            if (!isSpacePressed && !player.isMoving() && !isKeyProcessing) {
 
-                                // 時間檢查：如果距離上次放招還不到 250 毫秒，直接無情攔截，不准放！
                                 long currentTime = System.currentTimeMillis();
                                 if (currentTime - lastSkillCastTime < SKILL_COOLDOWN) {
                                     break;
                                 }
 
-                                isSpacePressed = true; // 鎖定長按
-                                lastSkillCastTime = currentTime; // 蓋章！更新本次成功放招的時間點
+                                isSpacePressed = true;
+                                lastSkillCastTime = currentTime;
 
+                                // 鎖定移動狀態
+                                isKeyProcessing = true;
+                                // 設定出招姿勢
+                                player.setFacingBattlePose();
+
+                                // 技能邏輯
                                 String heroName = heroImageFile.split("/")[0];
                                 int targetCol = player.getCol() + player.getFacingDeltaCol();
                                 int targetRow = player.getRow() + player.getFacingDeltaRow();
@@ -271,9 +277,20 @@ public class Controller {
                                     skillManager.castCreateSkill(player, slime, heroName);
                                 }
 
-                                // 施法完畢後補畫角色和怪物
                                 if (!mapGrid.getChildren().contains(player.imageView)) player.addToMap(mapGrid);
                                 if (!mapGrid.getChildren().contains(slime.imageView)) slime.addToMap(mapGrid);
+
+                                // 200 毫秒後收招，並還原姿勢
+                                javafx.animation.Timeline castAnimation = new javafx.animation.Timeline(
+                                        new javafx.animation.KeyFrame(javafx.util.Duration.millis(200), e -> {
+
+                                            // 回復成原面向靜止圖片
+                                            player.setFacing(player.getFacingDeltaCol(), player.getFacingDeltaRow());
+                                            isKeyProcessing = false;
+                                        })
+                                );
+                                castAnimation.setCycleCount(1);
+                                castAnimation.play();
                             }
                         }
                         default -> {}
