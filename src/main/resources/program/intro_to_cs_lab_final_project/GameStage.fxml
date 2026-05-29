@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="program.intro_to_cs_lab_final_project.Controller">
+<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="program.intro_to_cs_lab_final_project.Controller">
     <top>
         <HBox alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" BorderPane.alignment="CENTER">
             <children>
@@ -52,4 +55,72 @@
             </children>
         </HBox>
     </bottom>
+   <left>
+      <StackPane prefHeight="600.0" prefWidth="900.0" style="-fx-background-color: rgba(0, 0, 0, 0.5);" visible="false" BorderPane.alignment="CENTER">
+         <children>
+            <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
+               <children>
+                  <Label alignment="CENTER" text="VICTORY!" textFill="GOLD">
+                     <font>
+                        <Font name="Eras Bold ITC" size="75.0" />
+                     </font>
+                  </Label>
+                  <Label alignment="CENTER" text="You collected all!" textFill="WHITE">
+                     <font>
+                        <Font name="Berlin Sans FB Demi Bold" size="25.0" />
+                     </font>
+                  </Label>
+                  <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
+                     <children>
+                        <Button mnemonicParsing="false" prefHeight="50.0" prefWidth="150.0" text="Replay">
+                           <font>
+                              <Font name="Berlin Sans FB Demi Bold" size="30.0" />
+                           </font>
+                        </Button>
+                        <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" prefHeight="50.0" prefWidth="150.0" text="Menu">
+                           <font>
+                              <Font name="Berlin Sans FB Demi Bold" size="30.0" />
+                           </font>
+                        </Button>
+                     </children>
+                     <padding>
+                        <Insets top="50.0" />
+                     </padding>
+                  </HBox>
+               </children>
+            </VBox>
+            <VBox alignment="CENTER" layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
+               <children>
+                  <Label alignment="CENTER" text="GAME OVER" textFill="#fb3030">
+                     <font>
+                        <Font name="Eras Bold ITC" size="75.0" />
+                     </font>
+                  </Label>
+                  <Label alignment="CENTER" text="Failure :(" textFill="WHITE">
+                     <font>
+                        <Font name="Berlin Sans FB Demi Bold" size="25.0" />
+                     </font>
+                  </Label>
+                  <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
+                     <children>
+                        <Button mnemonicParsing="false" prefHeight="50.0" prefWidth="150.0" text="Retry">
+                           <font>
+                              <Font name="Berlin Sans FB Demi Bold" size="30.0" />
+                           </font>
+                        </Button>
+                        <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" prefHeight="50.0" prefWidth="150.0" text="Menu">
+                           <font>
+                              <Font name="Berlin Sans FB Demi Bold" size="30.0" />
+                           </font>
+                        </Button>
+                     </children>
+                     <padding>
+                        <Insets top="50.0" />
+                     </padding>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+   </left>
 </BorderPane>
