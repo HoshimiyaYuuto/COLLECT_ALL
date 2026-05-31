@@ -8,6 +8,7 @@ public class SkillManager {
     private final GridPane mapGrid;
     private final Random random = new Random();
 
+
     public SkillManager(Map mapManager, GridPane mapGrid) {
         this.mapManager = mapManager;
         this.mapGrid = mapGrid;
@@ -46,14 +47,14 @@ public class SkillManager {
         int deltaRow = player.getFacingDeltaRow();
         int targetHeroTile = getHeroTileType(heroType);
 
-        // 法巫摧毀：觸發「全圖連鎖九宮格大爆炸」
+        // 法巫摧毀：觸發九宮格爆裂魔法
         if (heroType.equals("Mage")) {
             int targetCol = player.getCol() + deltaCol;
             int targetRow = player.getRow() + deltaRow;
             int currentTile = mapManager.getTileType(targetCol, targetRow);
 
             if (currentTile == targetHeroTile) {
-                // 💥 呼叫全新升級的連鎖爆炸演算法！
+                // 呼叫全新升級的連鎖爆炸演算法！
                 executeMageExplosionChain(targetCol, targetRow);
                 mapManager.render(mapGrid);
             }
@@ -111,6 +112,7 @@ public class SkillManager {
         for (int i = start; i <= end; i++) {
             int c = player.getCol() + dc * i;
             int r = player.getRow() + dr * i;
+            if (mapManager.getItemType(c, r) > 0) continue;
             if (mapManager.getTileType(c, r) == 0) {
                 mapManager.setTileType(c, r, 4);
             }
@@ -136,6 +138,7 @@ public class SkillManager {
     private void executeMage(Entity player, int dc, int dr) {
         int c = player.getCol() + dc;
         int r = player.getRow() + dr;
+        if (mapManager.getItemType(c, r) > 0) return;
         if (mapManager.getTileType(c, r) == 0) {
             mapManager.setTileType(c, r, 5);
         }
@@ -168,7 +171,7 @@ public class SkillManager {
         }
     }
 
-    // 法巫靈球爆裂演算法 (使用 BFS Queue 防止無窮遞迴)
+    // 法巫靈球爆裂魔法演算法 (使用 BFS Queue 防止無窮遞迴)
     private void executeMageExplosionChain(int startCol, int startRow) {
         Queue<int[]> targetsToExplode = new LinkedList<>();
         // 先把引爆起點的手把魔方塊刪除，並加入爆炸佇列

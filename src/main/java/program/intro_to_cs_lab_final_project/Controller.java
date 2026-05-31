@@ -1,5 +1,6 @@
 package program.intro_to_cs_lab_final_project;
 
+import javafx.animation.Animation;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -59,7 +60,10 @@ public class Controller {
     private long lastSkillCastTime = 0;      // 紀錄上一次成功放招的時間戳記（毫秒）
     private final long SKILL_COOLDOWN = 250;  // 技能冷卻時間(ms)
     private long lastEnvTickTime = 0;         // 紀錄上一次環境動態更新的時間點
-    private final long ENV_TICK_INTERVAL = 3000;
+    private long lastFoodMoveTime = 0; // 記錄上一次活體食物移動的時間
+    private final long ENV_TICK_INTERVAL = 3000;    // 環境更新時間
+    private int currentScore = 0;
+
 
     // 主選單：開始遊戲
     @FXML
@@ -263,7 +267,6 @@ public class Controller {
                                 // 設定出招姿勢
                                 player.setFacingBattlePose();
 
-                                // 技能邏輯
                                 String heroName = heroImageFile.split("/")[0];
                                 int targetCol = player.getCol() + player.getFacingDeltaCol();
                                 int targetRow = player.getRow() + player.getFacingDeltaRow();
@@ -271,20 +274,21 @@ public class Controller {
                                 int myHeroTile = skillManager.getHeroTileType(heroName);
 
                                 boolean isSlimeStandingThere = (targetCol == slime.getCol() && targetRow == slime.getRow());
+
                                 if (frontTile == myHeroTile && !isSlimeStandingThere) {
                                     skillManager.castDestroySkill(player, heroName);
                                 } else {
                                     skillManager.castCreateSkill(player, slime, heroName);
                                 }
 
+                                // 確保重新繪製後，角色和怪物不會不小心被地圖蓋過去
+                                mapManager.render(mapGrid);
                                 if (!mapGrid.getChildren().contains(player.imageView)) player.addToMap(mapGrid);
                                 if (!mapGrid.getChildren().contains(slime.imageView)) slime.addToMap(mapGrid);
 
                                 // 200 毫秒後收招，並還原姿勢
                                 javafx.animation.Timeline castAnimation = new javafx.animation.Timeline(
                                         new javafx.animation.KeyFrame(javafx.util.Duration.millis(200), e -> {
-
-                                            // 回復成原面向靜止圖片
                                             player.setFacing(player.getFacingDeltaCol(), player.getFacingDeltaRow());
                                             isKeyProcessing = false;
                                         })
@@ -311,7 +315,7 @@ public class Controller {
                         case S -> keyDown = false;
                         case A -> keyLeft = false;
                         case D -> keyRight = false;
-                        case SPACE -> isSpacePressed = false; // 👑 放開空白鍵時，解除冷卻鎖！
+                        case SPACE -> isSpacePressed = false;
                         default -> {}
                     }
                 });
@@ -320,20 +324,23 @@ public class Controller {
                 javafx.animation.Timeline gameLoop = new javafx.animation.Timeline(
                         new javafx.animation.KeyFrame(javafx.util.Duration.millis(10), e -> {
 
-                            // 🌍 核心新增：每 500 毫秒叫醒 skillManager 檢查全地圖的「草吸水」與「水/冰滅火」
+                            // 每3秒更新一下地圖屬性互剋情況
                             long currentTime = System.currentTimeMillis();
                             if (currentTime - lastEnvTickTime >= ENV_TICK_INTERVAL) {
-                                skillManager.updateEnvironmentTick(player, slime); // 呼叫我們之前寫好的環境大巡邏
-                                lastEnvTickTime = currentTime;        // 更新時間戳記
+                                skillManager.updateEnvironmentTick(player, slime);
+                                lastEnvTickTime = currentTime;
+                            }
+                            if (currentTime - lastFoodMoveTime >= 1000) {
+                                ItemManager.updateActiveFoodMove(mapManager, mapGrid, player, slime);
+                                lastFoodMoveTime = currentTime; // 精準記錄
                             }
 
-                            // ----------------- 以下是妳原本完好無動的 WASD 移動邏輯 -----------------
                             if (isKeyProcessing || player.isMoving()) return;
 
-                            // 長按起跑安全閥：檢查按鍵時間是否超過 120 毫秒。
+                            // 按鍵時間是否超過 120 毫秒才可移動
                             if (currentMovingKey != null && keyPressStartTime > 0) {
                                 long duration = System.currentTimeMillis() - keyPressStartTime;
-                                if (duration < 120) return; // 蓄力時間不夠，攔截，不准走！
+                                if (duration < 120) return;
                             }
 
                             int deltaCol = 0;
@@ -389,6 +396,26 @@ public class Controller {
                                             mapGrid.add(player.imageView, finalCol, finalRow);
                                         });
                                     }
+
+                                    int finalPlayerCol = player.getCol();
+                                    int finalPlayerRow = player.getRow();
+
+                                    // 檢查最終座標有沒有踩到食物編號 (1~24)
+                                    int foodId = mapManager.getItemType(finalPlayerCol, finalPlayerRow);
+
+                                    if (foodId > 0) {
+                                        // 清空食物陣列
+                                        mapManager.setItemType(finalPlayerCol, finalPlayerRow, 0);
+
+                                        // 用當下正確的網格坐標移除 ImageView
+                                        String targetFoodId = "food_" + finalPlayerCol + "_" + finalPlayerRow;
+                                        javafx.application.Platform.runLater(() -> {
+                                            mapGrid.getChildren().removeIf(node -> targetFoodId.equals(node.getId()));
+                                        });
+
+                                        // 分數調配
+                                        addScore(100);
+                                    }
                                 });
                             }
                         })
@@ -397,5 +424,22 @@ public class Controller {
                 gameLoop.play();
             }
         });
+    }
+
+    private void addScore(int points) {
+        currentScore += points;
+        if (currentScore < 0) currentScore = 0;
+        if (scoreLabel != null) {
+            javafx.application.Platform.runLater(() -> {
+                String formattedScore = String.format("%05d", currentScore);
+                scoreLabel.setText("SCORE: " + formattedScore);
+            });
+        }
+    }
+
+    public void checkGameResult() {
+        int targetScore = 1500; // 暫定第一關的通關門檻
+
+        // ======== 等待串接輸贏畫面 ========
     }
 }

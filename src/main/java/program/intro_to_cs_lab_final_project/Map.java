@@ -12,9 +12,9 @@ public class Map {
     private final int[][] gameMap = {
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
             {1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 1, 1, 2, 0, 3, 5, 6, 0, 4, 0, 1, 1, 0, 1},   //方塊測試
+            {1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1},   //方塊測試
             {1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1},
-            {1, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1},
             {1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -28,6 +28,22 @@ public class Map {
     private Image dungeonTileset;
     private Image flamemanFire;   // 火堆單圖
     private Image samuraiPlant;   // 草堆單圖
+
+    // 食物地圖
+    private final int[][] itemMap = {
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 12, 0, 0, 0, 24, 0, 0, 0, 0, 23, 0, 0, 0, 22, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 16, 0, 0, 0, 17, 0, 0, 0, 0, 18, 0, 0, 0, 19, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    };
 
     public Map() {
         String tilesetDir = "/program/intro_to_cs_lab_final_project/Tilesets/";
@@ -82,55 +98,62 @@ public class Map {
                 styleTile(floorView);
                 mapGrid.add(floorView, col, row);
 
-                // 疊加動態元素
+                // 先畫食物
+                int itemId = itemMap[row][col];
+                if (itemId > 0) {
+                    // 呼叫 ItemManager 生成掛好免圖動畫(跳跳/呼吸/發光)的 ImageView
+                    ImageView foodView = ItemManager.createItemView(itemId, this.tileSize);
+                    if (foodView != null) {
+                        // 給予精準的itemID
+                        foodView.setId("food_" + col + "_" + row);
+                        mapGrid.add(foodView, col, row);
+                    }
+                }
+
+                // 疊加地形/技能方塊元素
                 int type = gameMap[row][col];
+                ImageView blockView = null;
 
                 if (type == 1) {
-                    // 1: 地圖紅磚
-                    ImageView wallView = new ImageView(dungeonTileset);
-                    wallView.setViewport(new Rectangle2D(0, 48, 16, 16));
-                    styleTile(wallView);
-                    mapGrid.add(wallView, col, row);
+                    blockView = new ImageView(dungeonTileset);
+                    blockView.setViewport(new Rectangle2D(0, 48, 16, 16));
                 }
                 else if (type == 2) {
-                    // 2: 光哥技能: 水牆
-                    ImageView waterView = new ImageView(dungeonTileset);
-                    waterView.setViewport(new Rectangle2D(0, 32, 16, 16));
-                    styleTile(waterView);
-                    mapGrid.add(waterView, col, row);
+                    blockView = new ImageView(dungeonTileset);
+                    blockView.setViewport(new Rectangle2D(0, 32, 16, 16));
                 }
                 else if (type == 3) {
-                    // 3: 冰結忍技能: 冰牆
-                    ImageView iceView = new ImageView(dungeonTileset);
-                    iceView.setViewport(new Rectangle2D(16, 32, 16, 16));
-                    styleTile(iceView);
-                    mapGrid.add(iceView, col, row);
+                    blockView = new ImageView(dungeonTileset);
+                    blockView.setViewport(new Rectangle2D(16, 32, 16, 16));
                 }
                 else if (type == 4) {
-                    // 4: 火燄忍技能: 火焰
-                    ImageView fireView = new ImageView(flamemanFire);
-                    styleTile(fireView);
-                    mapGrid.add(fireView, col, row);
+                    blockView = new ImageView(flamemanFire);
                 }
                 else if (type == 5) {
-                    // 5: 法巫技能: 大靈球
-                    ImageView mageView = new ImageView(dungeonTileset);
-                    mageView.setViewport(new Rectangle2D(112, 32, 16, 16));
-                    styleTile(mageView);
-                    mapGrid.add(mageView, col, row);
+                    blockView = new ImageView(dungeonTileset);
+                    blockView.setViewport(new Rectangle2D(112, 32, 16, 16));
                 }
                 else if (type == 6) {
-                    // 6: 機鉨鈦鎂: 金屬鎖頭牆
-                    ImageView lockView = new ImageView(dungeonTileset);
-                    lockView.setViewport(new Rectangle2D(0, 0, 16, 16));
-                    styleTile(lockView);
-                    mapGrid.add(lockView, col, row);
+                    blockView = new ImageView(dungeonTileset);
+                    blockView.setViewport(new Rectangle2D(0, 0, 16, 16));
                 }
                 else if (type == 7) {
-                    // 7. 信長: 草牆
-                    ImageView grassView = new ImageView(samuraiPlant);
-                    styleTile(grassView);
-                    mapGrid.add(grassView, col, row);
+                    blockView = new ImageView(samuraiPlant);
+                }
+
+                // 如果這格有方塊，將其疊加在食物上方
+                if (blockView != null) {
+                    styleTile(blockView);
+
+                    // 給予精準的的blockID
+                    blockView.setId("block_" + col + "_" + row);
+
+                    // 透明化裝有item的方塊
+                    if (itemId > 0) {
+                        blockView.setOpacity(0.60); // 透明度60%
+                    }
+
+                    mapGrid.add(blockView, col, row);
                 }
             }
         }
@@ -140,5 +163,19 @@ public class Map {
         iv.setFitWidth(tileSize + 0.8);
         iv.setFitHeight(tileSize + 0.8);
         iv.setSmooth(false);
+    }
+
+    // item 的 Getter 和 Setter
+    public int getItemType(int col, int row) {
+        if (row < 0 || row >= itemMap.length || col < 0 || col >= itemMap[0].length) {
+            return -1;
+        }
+        return itemMap[row][col];
+    }
+
+    public void setItemType(int col, int row, int type) {
+        if (row >= 0 && row < itemMap.length && col >= 0 && col < itemMap[0].length) {
+            itemMap[row][col] = type;
+        }
     }
 }
