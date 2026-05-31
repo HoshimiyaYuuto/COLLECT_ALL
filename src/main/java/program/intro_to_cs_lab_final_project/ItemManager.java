@@ -59,9 +59,20 @@ public class ItemManager {
             for (int c = 0; c < 16; c++) {
                 int currentFood = mapManager.getItemType(c, r);
 
+                // 🎯 只要是 Type 2 (7~12) 的海鮮肉肉組
                 if (getItemTypeByID(currentFood) == 2) {
-                    // 防重複移動防線
-                    if (movedPositions.contains(c + "," + r)) continue;
+
+                    // 👑 終極封印防線：先檢查食物「自己腳下這格」的地圖方塊
+                    int currentTile = mapManager.getTileType(c, r);
+                    if (currentTile != 0) {
+                        // 🔒 只要不是空地(0)，代表被英雄技能方塊、火堆、草堆鎖住了，這秒直接坐牢，不准逃跑！
+                        continue;
+                    }
+
+                    // 防重複移動防線 (原本寫好的邏輯保持不變)
+                    if (movedPositions.contains(c + "," + r)) {
+                        continue;
+                    }
 
                     int moveIntervalSeconds = getFoodSpeedInterval(currentFood);
 
@@ -87,7 +98,7 @@ public class ItemManager {
                             }
                         }
 
-                        // 找到空地立刻移動
+                        // 找到空地，立刻跳過去
                         if (!validMoves.isEmpty()) {
                             int[] nextPos = validMoves.get(random.nextInt(validMoves.size()));
                             int nextC = nextPos[0];
