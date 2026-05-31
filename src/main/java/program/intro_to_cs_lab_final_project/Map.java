@@ -178,4 +178,14 @@ public class Map {
             itemMap[row][col] = type;
         }
     }
+
+    // 切換關卡用
+    public void loadLevelData(int[][] newGameMap, int[][] newItemMap) {
+        for (int r = 0; r < 12; r++) {
+            for (int c = 0; c < 16; c++) {
+                this.gameMap[r][c] = newGameMap[r][c];
+                this.itemMap[r][c] = newItemMap[r][c];
+            }
+        }
+    }
 }

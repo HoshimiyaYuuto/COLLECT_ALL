@@ -12,7 +12,6 @@ import java.util.*;
 
 public class ItemManager {
 
-    // 👑 權威數字對照表：索引 0 留空，ID 1~24 精準對應 24 種圖片檔名
     private static final String[] FOOD_NAMES = {
             "", // 0 留空
             // 1~6: 一般食物 (Type 1)
@@ -46,8 +45,7 @@ public class ItemManager {
         };
     }
 
-    // 會移動的食物的移動邏輯
-    public static void updateActiveFoodMove(Map mapManager, GridPane mapGrid, Entity player, Entity slime) {
+    public static void updateActiveFoodMove(Map mapManager, GridPane mapGrid, Entity player, List<Monster> monsters) {
         foodTickCount++;
         boolean mutated = false;
 
@@ -87,9 +85,18 @@ public class ItemManager {
                                 boolean isTileEmpty = (mapManager.getTileType(nc, nr) == 0);
                                 boolean isItemEmpty = (mapManager.getItemType(nc, nr) == 0);
                                 boolean isPlayerThere = (nc == player.getCol() && nr == player.getRow());
-                                boolean isSlimeThere = (nc == slime.getCol() && nr == slime.getRow());
 
-                                if (isTileEmpty && isItemEmpty && !isPlayerThere && !isSlimeThere) {
+                                // 掃描有沒有撞到任何一隻怪
+                                boolean isMonsterThere = false;
+                                for (Monster m : monsters) {
+                                    if (nc == m.getCol() && nr == m.getRow()) {
+                                        isMonsterThere = true;
+                                        break;
+                                    }
+                                }
+
+                                // 只有在完全空置、且沒有玩家、沒有任何怪物的地方，活體食物才敢跳過去
+                                if (isTileEmpty && isItemEmpty && !isPlayerThere && !isMonsterThere) {
                                     validMoves.add(new int[]{nc, nr});
                                 }
                             }
@@ -118,14 +125,18 @@ public class ItemManager {
             javafx.application.Platform.runLater(() -> {
                 mapManager.render(mapGrid);
                 player.addToMap(mapGrid);
-                slime.addToMap(mapGrid);
+
+                for (Monster m : monsters) {
+                    m.addToMap(mapGrid);
+                    if (m.imageView != null) m.imageView.toFront();
+                }
+
                 if (player.imageView != null) player.imageView.toFront();
-                if (slime.imageView != null) slime.imageView.toFront();
             });
         }
     }
 
-    // 傳入食物編號，回傳對應特殊動畫的 ImageView
+    // 傳入食物編號，回傳對應特殊動畫的 ImageView (保持不變)
     public static ImageView createItemView(int itemId, double tileSize) {
         if (itemId < 1 || itemId >= FOOD_NAMES.length) return null;
 

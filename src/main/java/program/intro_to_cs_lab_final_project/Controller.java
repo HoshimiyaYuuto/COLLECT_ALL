@@ -1,13 +1,10 @@
 package program.intro_to_cs_lab_final_project;
 
-import javafx.animation.Animation;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -15,6 +12,15 @@ import javafx.stage.Stage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.media.AudioClip;
 import javafx.scene.Scene;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+
+import java.util.*;
 
 public class Controller {
     @FXML
@@ -51,7 +57,6 @@ public class Controller {
     // 宣告專屬的經理物件
     private Map mapManager;
     private Entity player;
-    private Entity slime;
     private SkillManager skillManager;
 
     private boolean isSpacePressed = false; // 防 SPACE 鬼畜連發鎖
@@ -60,10 +65,12 @@ public class Controller {
     private long lastSkillCastTime = 0;      // 紀錄上一次成功放招的時間戳記（毫秒）
     private final long SKILL_COOLDOWN = 250;  // 技能冷卻時間(ms)
     private long lastEnvTickTime = 0;         // 紀錄上一次環境動態更新的時間點
-    private long lastFoodMoveTime = 0; // 記錄上一次活體食物移動的時間
+    private long lastFoodMoveTime = 0;        // 記錄上一次活體食物移動的時間
     private final long ENV_TICK_INTERVAL = 3000;    // 環境更新時間
     private int currentScore = 0;
 
+    private List<Monster> monsters = new ArrayList<>(); // 儲存當前關卡的所有怪物
+    private long lastMonsterMoveTime = 0;               // 記錄上一次怪物移動的時間戳
 
     // 主選單：開始遊戲
     @FXML
@@ -128,15 +135,12 @@ public class Controller {
     // 遊戲初始化
     @FXML
     public void initialize() {
-//        if (mapGrid == null) return;
         if (mapGrid == null) {
             String clickPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Alert/Alert4.wav").toExternalForm();
             clickSound = new AudioClip(clickPath);
-//            clickSound.setVolume(0.7);
 
             String closePath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Menu/Menu12.wav").toExternalForm();
             closeSound = new AudioClip(closePath);
-//            closeSound.setVolume(0.7);
 
             String selectHeroPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Menu/Accept5.wav").toExternalForm();
             selectHeroSound = new AudioClip(selectHeroPath);
@@ -150,7 +154,7 @@ public class Controller {
         mapManager = new Map();
         skillManager = new SkillManager(mapManager, mapGrid);
 
-        // 初始化地圖與實體
+        // 初始化地圖與實體尺寸
         mapManager.updateTileSize(512.0);
         mapManager.render(mapGrid);
 
@@ -164,12 +168,21 @@ public class Controller {
         // ===============================================
 
         player = new Entity(baseCharacterDir + heroImageFile, 1, 1);
-        slime = new Entity(baseMonsterDir + "Slime/Slime.png", 14, 10);
 
+        // 關卡怪獸軍團初始化
+        monsters.clear();
+        monsters.add(new Monster(baseMonsterDir + "Slime/Slime.png", 14, 10, "Beast"));
+        monsters.add(new Monster(baseMonsterDir + "Mushroom/SpriteSheet.png", 5, 5, "Mushroom"));
+
+        // 統一縮放並鋪上網格
+        for (Monster m : monsters) {
+            m.updateScale(mapManager.getTileSize(), mapGrid);
+            m.addToMap(mapGrid);
+        }
+
+        // 清理掉原本重複多呼叫一次的 player 鋪網格代碼
         player.updateScale(mapManager.getTileSize(), mapGrid);
-        slime.updateScale(mapManager.getTileSize(), mapGrid);
         player.addToMap(mapGrid);
-        slime.addToMap(mapGrid);
 
         // 監聽畫面寬高
         javafx.application.Platform.runLater(() -> {
@@ -188,13 +201,13 @@ public class Controller {
                     if (availableWidth < 200) availableWidth = 200;
                     if (availableHeight < 150) availableHeight = 150;
 
-                    // 依據 16:12比例計算
+                    // 依據 16:12 比例計算
                     double widthBasedOnWidth = availableWidth;
                     double widthBasedOnHeight = availableHeight * (16.0 / 12.0);
                     // 兩者取小值以確保寬或高任何一方都不會超出邊界
                     double finalGridWidth = Math.min(widthBasedOnWidth, widthBasedOnHeight);
 
-                    // 限制地圖的最終極限，不要無限放大或縮到看不見
+                    // 限制地圖的最終極限
                     if (finalGridWidth < 320) finalGridWidth = 320;
                     if (finalGridWidth > 800) finalGridWidth = 800;
 
@@ -212,11 +225,14 @@ public class Controller {
                     mapManager.render(mapGrid);
 
                     player.updateScale(mapManager.getTileSize(), mapGrid);
-                    slime.updateScale(mapManager.getTileSize(), mapGrid);
 
-                    // 重新把角色和怪物塞回網格
+                    // 重新把角色和全場怪物塞回網格，確保最上層渲染
                     if (!mapGrid.getChildren().contains(player.imageView)) player.addToMap(mapGrid);
-                    if (!mapGrid.getChildren().contains(slime.imageView)) slime.addToMap(mapGrid);
+
+                    for (Monster m : monsters) {
+                        m.updateScale(mapManager.getTileSize(), mapGrid);
+                        if (!mapGrid.getChildren().contains(m.imageView)) m.addToMap(mapGrid);
+                    }
                 };
 
                 // 觸發寬高計算邏輯
@@ -230,14 +246,13 @@ public class Controller {
                 scene.setOnKeyPressed(event -> {
                     KeyCode code = event.getCode();
 
-                    // 轉向優先邏輯：一按下 WASD，立刻強迫角色轉向，並記錄時間
+                    // 轉向優先邏輯
                     if (code == KeyCode.W || code == KeyCode.S || code == KeyCode.A || code == KeyCode.D) {
                         if (currentMovingKey != code) {
                             currentMovingKey = code;
-                            keyPressStartTime = System.currentTimeMillis(); // 記錄按下起點
+                            keyPressStartTime = System.currentTimeMillis();
                         }
 
-                        // 根據按鍵直接先改角色的面向，這樣玩家輕點就能原地轉身！
                         switch (code) {
                             case W -> { keyUp = true;    player.setFacing(0, -1); }
                             case S -> { keyDown = true;  player.setFacing(0, 1); }
@@ -249,7 +264,6 @@ public class Controller {
 
                     // 讀取空白鍵反應(生成/摧毀技能方塊)
                     switch (code) {
-                        // 讀取空白鍵反應(生成/摧毀技能方塊)
                         case SPACE -> {
                             // 防連發、防移動中施法、防施法中移動
                             if (!isSpacePressed && !player.isMoving() && !isKeyProcessing) {
@@ -262,10 +276,8 @@ public class Controller {
                                 isSpacePressed = true;
                                 lastSkillCastTime = currentTime;
 
-                                // 鎖定移動狀態
-                                isKeyProcessing = true;
-                                // 設定出招姿勢
-                                player.setFacingBattlePose();
+                                isKeyProcessing = true; // 鎖定移動狀態
+                                player.setFacingBattlePose(); // 設定出招姿勢
 
                                 String heroName = heroImageFile.split("/")[0];
                                 int targetCol = player.getCol() + player.getFacingDeltaCol();
@@ -273,20 +285,30 @@ public class Controller {
                                 int frontTile = mapManager.getTileType(targetCol, targetRow);
                                 int myHeroTile = skillManager.getHeroTileType(heroName);
 
-                                boolean isSlimeStandingThere = (targetCol == slime.getCol() && targetRow == slime.getRow());
+                                // 遍歷怪獸軍團，檢查技能施放目標點是否有怪
+                                boolean isMonsterStandingThere = false;
+                                for (Monster m : monsters) {
+                                    if (targetCol == m.getCol() && targetRow == m.getRow()) {
+                                        isMonsterStandingThere = true;
+                                        break;
+                                    }
+                                }
 
-                                if (frontTile == myHeroTile && !isSlimeStandingThere) {
+                                // 判斷生成/摧毀技能方塊
+                                if (frontTile == myHeroTile && !isMonsterStandingThere) {
                                     skillManager.castDestroySkill(player, heroName);
                                 } else {
-                                    skillManager.castCreateSkill(player, slime, heroName);
+                                    skillManager.castCreateSkill(player, monsters, heroName);
                                 }
 
                                 // 確保重新繪製後，角色和怪物不會不小心被地圖蓋過去
                                 mapManager.render(mapGrid);
                                 if (!mapGrid.getChildren().contains(player.imageView)) player.addToMap(mapGrid);
-                                if (!mapGrid.getChildren().contains(slime.imageView)) slime.addToMap(mapGrid);
+                                for (Monster m : monsters) {
+                                    if (!mapGrid.getChildren().contains(m.imageView)) m.addToMap(mapGrid);
+                                }
 
-                                // 200 毫秒後收招，並還原姿勢
+                                // 200 毫秒後收招
                                 javafx.animation.Timeline castAnimation = new javafx.animation.Timeline(
                                         new javafx.animation.KeyFrame(javafx.util.Duration.millis(200), e -> {
                                             player.setFacing(player.getFacingDeltaCol(), player.getFacingDeltaRow());
@@ -306,7 +328,7 @@ public class Controller {
                     KeyCode code = event.getCode();
 
                     if (code == currentMovingKey) {
-                        currentMovingKey = null; // 清空移動主導鍵
+                        currentMovingKey = null;
                         keyPressStartTime = 0;
                     }
 
@@ -320,19 +342,28 @@ public class Controller {
                     }
                 });
 
-                // 建立連續移動主迴圈（加入長按判定）
+                // 建立連續移動主迴圈
                 javafx.animation.Timeline gameLoop = new javafx.animation.Timeline(
                         new javafx.animation.KeyFrame(javafx.util.Duration.millis(10), e -> {
 
-                            // 每3秒更新一下地圖屬性互剋情況
                             long currentTime = System.currentTimeMillis();
+
+                            // 每3秒更新環境屬性互剋
                             if (currentTime - lastEnvTickTime >= ENV_TICK_INTERVAL) {
-                                skillManager.updateEnvironmentTick(player, slime);
+                                skillManager.updateEnvironmentTick(player, monsters);
                                 lastEnvTickTime = currentTime;
                             }
+
+                            // 每1秒活體食物更新
                             if (currentTime - lastFoodMoveTime >= 1000) {
-                                ItemManager.updateActiveFoodMove(mapManager, mapGrid, player, slime);
-                                lastFoodMoveTime = currentTime; // 精準記錄
+                                ItemManager.updateActiveFoodMove(mapManager, mapGrid, player, monsters);
+                                lastFoodMoveTime = currentTime;
+                            }
+
+                            // 每0.5秒智慧怪物 AI 移動更新
+                            if (currentTime - lastMonsterMoveTime >= 500) {
+                                MonsterManager.updateMonsterAI(mapManager, mapGrid, player, monsters);
+                                lastMonsterMoveTime = currentTime;
                             }
 
                             if (isKeyProcessing || player.isMoving()) return;
@@ -358,7 +389,7 @@ public class Controller {
                                 int targetCol = currentCol + deltaCol;
                                 int targetRow = currentRow + deltaRow;
 
-                                // 傳送安全性檢查區
+                                // 傳送門安全防護線檢查
                                 if (targetCol < 0) {
                                     if (mapManager.getTileType(0, currentRow) != 0 || mapManager.getTileType(15, currentRow) != 0) return;
                                 } else if (targetCol > 15) {
@@ -400,7 +431,7 @@ public class Controller {
                                     int finalPlayerCol = player.getCol();
                                     int finalPlayerRow = player.getRow();
 
-                                    // 檢查最終座標有沒有踩到食物編號 (1~24)
+                                    // 檢查最終座標有沒有踩到食物
                                     int foodId = mapManager.getItemType(finalPlayerCol, finalPlayerRow);
 
                                     if (foodId > 0) {
@@ -438,8 +469,7 @@ public class Controller {
     }
 
     public void checkGameResult() {
-        int targetScore = 1500; // 暫定第一關的通關門檻
-
+        int targetScore = 1500;
         // ======== 等待串接輸贏畫面 ========
     }
 }

@@ -8,26 +8,35 @@ public class SkillManager {
     private final GridPane mapGrid;
     private final Random random = new Random();
 
-
     public SkillManager(Map mapManager, GridPane mapGrid) {
         this.mapManager = mapManager;
         this.mapGrid = mapGrid;
     }
 
     // 釋放生成方塊技能
-    public void castCreateSkill(Entity player, Entity slime, String heroType) {
+    public void castCreateSkill(Entity player, List<Monster> monsters, String heroType) {
         int deltaCol = player.getFacingDeltaCol();
         int deltaRow = player.getFacingDeltaRow();
 
-        // 找出生成有效區域
-        int[] areaInfo = calculateEffectiveArea(player, slime, heroType, deltaCol, deltaRow);
+        int targetCol = player.getCol() + deltaCol;
+        int targetRow = player.getRow() + deltaRow;
+
+        boolean isMonsterThere = false;
+        for (Monster m : monsters) {
+            if (targetCol == m.getCol() && targetRow == m.getRow()) {
+                isMonsterThere = true;
+                break;
+            }
+        }
+
+        int[] areaInfo = calculateEffectiveArea(player, monsters, heroType, deltaCol, deltaRow);
         int startIdx = areaInfo[0];
         int endIdx = areaInfo[1];
         boolean hasMetTarget = (areaInfo[2] == 1);
 
         if (startIdx > endIdx && !hasMetTarget) return;
 
-        // 根據不同英雄執行專屬技能與對應反應
+        // 根據不同英雄執行專屬技能
         switch (heroType) {
             case "Bald" -> executeBald(player, deltaCol, deltaRow, startIdx, endIdx, hasMetTarget);
             case "Flameman" -> executeFlameman(player, deltaCol, deltaRow, startIdx, endIdx);
@@ -41,7 +50,7 @@ public class SkillManager {
         mapManager.render(mapGrid);
     }
 
-    // 釋放摧毀方塊技能
+    // 釋放摧毀方塊技能（此處無動到怪物，維持優雅運作）
     public void castDestroySkill(Entity player, String heroType) {
         int deltaCol = player.getFacingDeltaCol();
         int deltaRow = player.getFacingDeltaRow();
@@ -54,8 +63,7 @@ public class SkillManager {
             int currentTile = mapManager.getTileType(targetCol, targetRow);
 
             if (currentTile == targetHeroTile) {
-                // 呼叫全新升級的連鎖爆炸演算法！
-                executeMageExplosionChain(targetCol, targetRow);
+                executeMageExplosionChain(targetCol, targetRow); // 呼叫全新升級的連鎖爆炸演算法
                 mapManager.render(mapGrid);
             }
             return;
@@ -84,12 +92,9 @@ public class SkillManager {
     // ==================== 各英雄技能具體實作區 ====================
 
     private void executeBald(Entity player, int dc, int dr, int start, int end, boolean hasGrass) {
-        if (hasGrass) {
-            if (random.nextBoolean()) {
-                growRandomGrassNearby(player);
-            }
+        if (hasGrass && random.nextBoolean()) {
+            growRandomGrassNearby(player);
         }
-
         // 生成水方塊 (2)
         for (int i = start; i <= end; i++) {
             int c = player.getCol() + dc * i;
@@ -99,7 +104,7 @@ public class SkillManager {
     }
 
     private void executeFlameman(Entity player, int dc, int dr, int start, int end) {
-        // 1. 連鎖燒草
+        // 連鎖燒草
         for (int i = start; i <= end; i++) {
             int c = player.getCol() + dc * i;
             int r = player.getRow() + dr * i;
@@ -108,7 +113,7 @@ public class SkillManager {
             }
         }
 
-        // 2. 生成火堆 (4)
+        // 生成火堆 (4)
         for (int i = start; i <= end; i++) {
             int c = player.getCol() + dc * i;
             int r = player.getRow() + dr * i;
@@ -127,9 +132,7 @@ public class SkillManager {
 
             if (currentTile == 4) {
                 mapManager.setTileType(c, r, 2);
-            } else if (currentTile == 2) {
-                mapManager.setTileType(c, r, 3);
-            } else if (currentTile == 0) {
+            } else if (currentTile == 2 || currentTile == 0) {
                 mapManager.setTileType(c, r, 3);
             }
         }
@@ -160,7 +163,6 @@ public class SkillManager {
             int r = player.getRow() + dr * i;
             if (mapManager.getTileType(c, r) == 4) return;
         }
-
         for (int i = start; i <= end; i++) {
             int c = player.getCol() + dc * i;
             int r = player.getRow() + dr * i;
@@ -192,10 +194,9 @@ public class SkillManager {
                     // 地圖邊界安全防護
                     if (c >= 0 && c < 16 && r >= 0 && r < 12) {
                         int tile = mapManager.getTileType(c, r);
-
                         // 法巫靈球爆裂
                         if (tile == 5) {
-                            mapManager.setTileType(c, r, 0); // 先行移除防止重複抓取
+                            mapManager.setTileType(c, r, 0);
                             targetsToExplode.add(new int[]{c, r});
                         } else {
                             // 普通方塊（空地、紅磚 1、草、火、冰等）直接被衝擊波炸成沙地
@@ -209,7 +210,7 @@ public class SkillManager {
 
     // ==================== 幾何與碰撞演算法核心 ====================
 
-    private int[] calculateEffectiveArea(Entity player, Entity slime, String heroType, int dc, int dr) {
+    private int[] calculateEffectiveArea(Entity player, List<Monster> monsters, String heroType, int dc, int dr) {
         int start = 1;
         int end = 0;
         int pCol = player.getCol();
@@ -223,21 +224,23 @@ public class SkillManager {
             int r = pRow + dr * i;
 
             int tile = mapManager.getTileType(c, r);
-            if (tile == -1) break;
+            if (tile == -1) break; // 撞到邊界退出
 
-            if (c == slime.getCol() && r == slime.getRow()) {
-                break;
+            // 檢查有沒有撞到任何一隻怪物
+            boolean hitMonster = false;
+            for (Monster m : monsters) {
+                if (c == m.getCol() && r == m.getRow()) {
+                    hitMonster = true;
+                    break;
+                }
             }
+            if (hitMonster) break;
 
-            if (tile == targetHeroTile) {
-                break;
-            }
+            if (tile == targetHeroTile) break;
 
             // 火忍遇到水(2)或冰(3)，射程當場「砍斷到前一格的前一格」並強制結束
             if (heroType.equals("Flameman") && (tile == 2 || tile == 3)) {
-                if (tile == 3) {
-                    mapManager.setTileType(c, r, 2); // 融冰化水
-                }
+                if (tile == 3) mapManager.setTileType(c, r, 2);
                 end = i - 2;
                 hasMetTargetTile = 1;
                 break;
@@ -253,7 +256,6 @@ public class SkillManager {
             // 普通阻擋判定
             if (tile == 1 || tile != 0) {
                 boolean isInteractableTile = false;
-
                 switch (heroType) {
                     case "Flameman" -> { if (tile == 7) isInteractableTile = true; }
                     case "Bald" -> { if (tile == 4 || tile == 7) isInteractableTile = true; }
@@ -272,11 +274,8 @@ public class SkillManager {
             if (heroType.equals("Mage")) break;
         }
 
-        // 防呆安全鎖：如果砍過頭導致 end 比 start 還小，就校正回沒有生成區
-        if (end < start) {
-            end = start - 1;
-        }
-
+        // 如果砍過頭導致 end 比 start 還小，就校正回沒有生成區
+        if (end < start) end = start - 1;
         return new int[]{start, end, hasMetTargetTile};
     }
 
@@ -311,8 +310,8 @@ public class SkillManager {
         }
     }
 
-    // 環境動態生態更新(化學反應)
-    public void updateEnvironmentTick(Entity player, Entity slime) {
+    // 環境動態更新(化學反應)
+    public void updateEnvironmentTick(Entity player, List<Monster> monsters) {
         boolean mutated = false;
 
         int[][] tempMap = new int[12][16];
@@ -327,25 +326,17 @@ public class SkillManager {
             for (int c = 0; c < 16; c++) {
                 int currentTile = mapManager.getTileType(c, r);
 
-                // 1. 草堆(7)吸水
+                // 草堆(7)吸水
                 if (currentTile == 7) {
-                    if (absorbWaterNearby(c, r, tempMap)) {
-                        mutated = true;
-                    }
+                    if (absorbWaterNearby(c, r, tempMap)) mutated = true;
                 }
-
-                // 2. 水(2)或冰(3)熄火
+                // 水(2)或冰(3)熄火
                 if (currentTile == 2 || currentTile == 3) {
-                    if (extinguishFireNearby(c, r, currentTile, tempMap)) {
-                        mutated = true;
-                    }
+                    if (extinguishFireNearby(c, r, currentTile, tempMap)) mutated = true;
                 }
-
-                // 3. 火堆(4)燒草
+                // 火堆(4)燒草
                 if (currentTile == 4) {
-                    if (burnGrassNearby(c, r, tempMap)) {
-                        mutated = true;
-                    }
+                    if (burnGrassNearby(c, r, tempMap)) mutated = true;
                 }
             }
         }
@@ -360,15 +351,16 @@ public class SkillManager {
 
             // 使用 Platform.runLater 來同步畫面
             javafx.application.Platform.runLater(() -> {
-                // 重畫地圖
-                mapManager.render(mapGrid);
+                mapManager.render(mapGrid); // 重畫地圖
 
                 // 地圖瓷磚全部重鋪完，立刻把玩家和怪物加回地圖
-                player.addToMap(mapGrid);
-                slime.addToMap(mapGrid);
-                // 顯示機制防呆
+                if (!mapGrid.getChildren().contains(player.imageView)) player.addToMap(mapGrid);
                 if (player.imageView != null) player.imageView.toFront();
-                if (slime.imageView != null) slime.imageView.toFront();
+
+                for (Monster m : monsters) {
+                    if (!mapGrid.getChildren().contains(m.imageView)) m.addToMap(mapGrid);
+                    if (m.imageView != null) m.imageView.toFront();
+                }
             });
         }
     }
@@ -378,8 +370,7 @@ public class SkillManager {
         int[][] dirs = {{1,0}, {-1,0}, {0,1}, {0,-1}};
         boolean transformed = false;
         for (int[] d : dirs) {
-            int nc = c + d[0];
-            int nr = r + d[1];
+            int nc = c + d[0]; int nr = r + d[1];
             if (nc >= 0 && nc < 16 && nr >= 0 && nr < 12) {
                 if (mapManager.getTileType(nc, nr) == 2) {
                     tempMap[nr][nc] = 7; // 水變草
@@ -390,21 +381,16 @@ public class SkillManager {
         return transformed;
     }
 
-    // 水或冰熄火
     private boolean extinguishFireNearby(int c, int r, int myTile, int[][] tempMap) {
         int[][] dirs = {{1,0}, {-1,0}, {0,1}, {0,-1}};
         boolean transformed = false;
         for (int[] d : dirs) {
-            int nc = c + d[0];
-            int nr = r + d[1];
+            int nc = c + d[0]; int nr = r + d[1];
             if (nc >= 0 && nc < 16 && nr >= 0 && nr < 12) {
                 if (mapManager.getTileType(nc, nr) == 4) {
                     tempMap[nr][nc] = 0; // 火堆熄滅變空地
-
                     // 如果原本是冰(3)去碰到火，冰才會融化退化成水(2)
-                    if (myTile == 3) {
-                        tempMap[r][c] = 2;
-                    }
+                    if (myTile == 3) tempMap[r][c] = 2;
                     transformed = true;
                 }
             }
@@ -417,18 +403,19 @@ public class SkillManager {
         int[][] dirs = {{1,0}, {-1,0}, {0,1}, {0,-1}};
         boolean transformed = false;
         for (int[] d : dirs) {
-            int nc = c + d[0];
-            int nr = r + d[1];
+            int nc = c + d[0]; int nr = r + d[1];
             if (nc >= 0 && nc < 16 && nr >= 0 && nr < 12) {
                 // 如果火堆旁邊貼著草堆(7)
                 if (mapManager.getTileType(nc, nr) == 7) {
-                    tempMap[nr][nc] = 4; // 草堆當場燒起來變成火堆！
+                    // 草堆變成火堆
+                    tempMap[nr][nc] = 4;
                     transformed = true;
                 }
             }
         }
         return transformed;
     }
+
     public int getHeroTileType(String heroType) {
         return switch (heroType) {
             case "Bald" -> 2;
