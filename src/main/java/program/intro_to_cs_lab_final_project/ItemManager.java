@@ -64,7 +64,8 @@ public class ItemManager {
 
                     // 檢查食物當下的地圖方塊
                     int currentTile = mapManager.getTileType(c, r);
-                    if (currentTile != 0) continue;
+
+                    if (currentTile != 0) continue; // 避免食物被技能方塊鎖住還移動
 
                     // 防重複移動防線
                     if (movedPositions.contains(c + "," + r)) {
