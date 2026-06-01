@@ -27,7 +27,7 @@ public class Entity {
 
         var inputStream = getClass().getResourceAsStream(imagePath);
         if (inputStream == null) {
-            System.err.println("❌ 實體載入失敗！找不到圖片: " + imagePath);
+            System.err.println("The path:" + imagePath + "fails to load the entity");
             inputStream = getClass().getResourceAsStream("/program/intro_to_cs_lab_final_project/Tilesets/TilesetFloor.png");
         }
 

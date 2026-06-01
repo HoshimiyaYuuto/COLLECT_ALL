@@ -136,7 +136,7 @@ public class ItemManager {
         }
     }
 
-    // 傳入食物編號，回傳對應特殊動畫的 ImageView (保持不變)
+    // 傳入食物編號，回傳對應特殊動畫的 ImageView
     public static ImageView createItemView(int itemId, double tileSize) {
         if (itemId < 1 || itemId >= FOOD_NAMES.length) return null;
 

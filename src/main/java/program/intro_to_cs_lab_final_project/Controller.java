@@ -66,8 +66,11 @@ public class Controller {
     private final long SKILL_COOLDOWN = 250;  // 技能冷卻時間(ms)
     private long lastEnvTickTime = 0;         // 紀錄上一次環境動態更新的時間點
     private long lastFoodMoveTime = 0;        // 記錄上一次活體食物移動的時間
-    private final long ENV_TICK_INTERVAL = 3000;    // 環境更新時間
     private int currentScore = 0;
+
+    private final long ENV_TICK_INTERVAL = 3000;    // 環境更新時間
+    private final long ITM_TICK_INTERVAL = 500;    // 食物移動更新時間
+    private final long MON_TICK_INTERVAL = 250;    // 怪物移動更新時間
 
     private List<Monster> monsters = new ArrayList<>(); // 儲存當前關卡的所有怪物
     private long lastMonsterMoveTime = 0;               // 記錄上一次怪物移動的時間戳
@@ -171,8 +174,10 @@ public class Controller {
 
         // 關卡怪獸軍團初始化
         monsters.clear();
-        monsters.add(new Monster(baseMonsterDir + "Slime/Slime.png", 14, 10, "Beast"));
-        monsters.add(new Monster(baseMonsterDir + "Mushroom/SpriteSheet.png", 5, 5, "Mushroom"));
+        //monsters.add(MonsterRegistry.create("Eye", 14, 10));
+        //monsters.add(MonsterRegistry.create("Eye2", 5, 5));
+        monsters.add(MonsterRegistry.create("Slime", 8, 2));
+        //monsters.add(MonsterRegistry.create("Spirit", 10, 8));
 
         // 統一縮放並鋪上網格
         for (Monster m : monsters) {
@@ -348,20 +353,20 @@ public class Controller {
 
                             long currentTime = System.currentTimeMillis();
 
-                            // 每3秒更新環境屬性互剋
+                            // 環境屬性互剋更新
                             if (currentTime - lastEnvTickTime >= ENV_TICK_INTERVAL) {
                                 skillManager.updateEnvironmentTick(player, monsters);
                                 lastEnvTickTime = currentTime;
                             }
 
-                            // 每1秒活體食物更新
-                            if (currentTime - lastFoodMoveTime >= 1000) {
+                            // 活體食物更新
+                            if (currentTime - lastFoodMoveTime >= ITM_TICK_INTERVAL) {
                                 ItemManager.updateActiveFoodMove(mapManager, mapGrid, player, monsters);
                                 lastFoodMoveTime = currentTime;
                             }
 
-                            // 每0.5秒智慧怪物 AI 移動更新
-                            if (currentTime - lastMonsterMoveTime >= 500) {
+                            // 怪物 AI 移動更新
+                            if (currentTime - lastMonsterMoveTime >= MON_TICK_INTERVAL) {
                                 MonsterManager.updateMonsterAI(mapManager, mapGrid, player, monsters);
                                 lastMonsterMoveTime = currentTime;
                             }
