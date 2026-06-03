@@ -43,6 +43,8 @@ public class Controller {
     @FXML
     private VBox SelectHero;
 
+    private javafx.animation.Timeline gameLoop;
+
     private AudioClip clickSound;
     private AudioClip closeSound;
     private AudioClip selectHeroSound;
@@ -70,7 +72,7 @@ public class Controller {
 
     private final long ENV_TICK_INTERVAL = 3000;    // 環境更新時間
     private final long ITM_TICK_INTERVAL = 500;    // 食物移動更新時間
-    private final long MON_TICK_INTERVAL = 250;    // 怪物移動更新時間
+    private final long MON_TICK_INTERVAL = 300;    // 怪物移動更新時間
 
     private List<Monster> monsters = new ArrayList<>(); // 儲存當前關卡的所有怪物
     private long lastMonsterMoveTime = 0;               // 記錄上一次怪物移動的時間戳
@@ -88,9 +90,6 @@ public class Controller {
     // 從選角畫面返回主選單
     @FXML
     private void handleBackToMenu(javafx.scene.input.MouseEvent event) {
-//        if (clickSound != null) {
-//            clickSound.play();
-//        }
         SelectHero.setVisible(false);
         MainMenu.setVisible(true);
     }
@@ -159,42 +158,29 @@ public class Controller {
 
         // 初始化地圖與實體尺寸
         mapManager.updateTileSize(512.0);
-        mapManager.render(mapGrid);
 
         String baseCharacterDir = "/program/intro_to_cs_lab_final_project/Character/";
-        String baseMonsterDir = "/program/intro_to_cs_lab_final_project/Monster/";
 
         // ======遊戲內部邏輯功能驗證用，開發完成前不要刪=======
-        if (heroImageFile == null || heroImageFile.isEmpty()) {
-            heroImageFile = "Samurai/SpriteSheet.png";
-        }
+        //if (heroImageFile == null || heroImageFile.isEmpty()) {
+        //    heroImageFile = "Samurai/SpriteSheet.png";
+        //}
         // ===============================================
 
         player = new Entity(baseCharacterDir + heroImageFile, 1, 1);
 
-        // 關卡怪獸軍團初始化
+        // 清空舊怪物
         monsters.clear();
-        //monsters.add(MonsterRegistry.create("Eye", 14, 10));
-        //monsters.add(MonsterRegistry.create("Eye2", 5, 5));
-        monsters.add(MonsterRegistry.create("Slime", 8, 2));
-        //monsters.add(MonsterRegistry.create("Spirit", 10, 8));
 
-        // 統一縮放並鋪上網格
-        for (Monster m : monsters) {
-            m.updateScale(mapManager.getTileSize(), mapGrid);
-            m.addToMap(mapGrid);
-        }
-
-        // 清理掉原本重複多呼叫一次的 player 鋪網格代碼
-        player.updateScale(mapManager.getTileSize(), mapGrid);
-        player.addToMap(mapGrid);
+        LevelManager.getInstance().init(this, mapManager, mapGrid);
+        LevelManager.getInstance().startNewLevel(); // 內部會觸發 resetPlayerPosition, setMonstersForLevel, spawnNextRoundOfFood
 
         // 監聽畫面寬高
         javafx.application.Platform.runLater(() -> {
             if (mapGrid.getScene() != null) {
                 javafx.scene.Scene scene = mapGrid.getScene();
 
-                // 排版計算邏輯
+                // 排版計算邏輯 (把原本少掉的排版精華原封不動補回來！)
                 Runnable resizeGrid = () -> {
                     double sceneWidth = scene.getWidth();
                     double sceneHeight = scene.getHeight();
@@ -348,10 +334,21 @@ public class Controller {
                 });
 
                 // 建立連續移動主迴圈
-                javafx.animation.Timeline gameLoop = new javafx.animation.Timeline(
+                gameLoop = new javafx.animation.Timeline(
                         new javafx.animation.KeyFrame(javafx.util.Duration.millis(10), e -> {
 
                             long currentTime = System.currentTimeMillis();
+
+                            // 怪獸接觸玩家判定 Game Over
+                            int playerCol = player.getCol();
+                            int playerRow = player.getRow();
+                            for (Monster m : monsters) {
+                                if (m.getCol() == playerCol && m.getRow() == playerRow) {
+                                    System.out.println("You are died");
+                                    LevelManager.getInstance().triggerGameOver();
+                                    return; // 直接中斷迴圈，不再執行後續移動
+                                }
+                            }
 
                             // 環境屬性互剋更新
                             if (currentTime - lastEnvTickTime >= ENV_TICK_INTERVAL) {
@@ -449,8 +446,8 @@ public class Controller {
                                             mapGrid.getChildren().removeIf(node -> targetFoodId.equals(node.getId()));
                                         });
 
-                                        // 分數調配
-                                        addScore(100);
+                                        // 串接 LevelManager ，由其負責判定
+                                        LevelManager.getInstance().onPlayerEatFood();
                                     }
                                 });
                             }
@@ -462,7 +459,7 @@ public class Controller {
         });
     }
 
-    private void addScore(int points) {
+    public void addScore(int points) {
         currentScore += points;
         if (currentScore < 0) currentScore = 0;
         if (scoreLabel != null) {
@@ -473,8 +470,33 @@ public class Controller {
         }
     }
 
-    public void checkGameResult() {
-        int targetScore = 1500;
-        // ======== 等待串接輸贏畫面 ========
+    public void setMonstersForLevel(List<Monster> newMonsters) {
+        // 清除舊怪，防止影像殘留
+        for (Monster m : this.monsters) {
+            if (m.imageView != null) mapGrid.getChildren().remove(m.imageView);
+        }
+        this.monsters = newMonsters;
+        for (Monster m : this.monsters) {
+            m.updateScale(mapManager.getTileSize(), mapGrid);
+            m.addToMap(mapGrid);
+        }
+    }
+
+    public void resetPlayerPosition(int col, int row) {
+        player.setCol(col);
+        player.setRow(row);
+        javafx.application.Platform.runLater(() -> {
+            mapGrid.getChildren().remove(player.imageView);
+            player.addToMap(mapGrid);
+        });
+    }
+
+    public void resetLevelScore() {
+        this.currentScore = 0;
+        addScore(0);
+    }
+
+    public void stopGameLoop() {
+        if (gameLoop != null) gameLoop.stop();
     }
 }
