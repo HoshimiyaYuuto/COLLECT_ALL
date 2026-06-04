@@ -7,7 +7,7 @@ public class LevelManager {
     private static LevelManager instance;
     private final Random random = new Random();
 
-    private int currentLevel = 1;   // Debug 能改這
+    private int currentLevel = 8;   // Debug 能改這
     private final int MAX_LEVELS = 10;
     private int totalFoodEatenInLevel = 0;
     private int currentRoundFoodCount = 0;
@@ -258,10 +258,10 @@ public class LevelManager {
                         {1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 2, 0, 3, 0, 4, 1},
                         {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1},
                         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-                        {1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1},
-                        {1, 0, 5, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 1},
-                        {1, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 5, 0, 1},
-                        {1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1},
+                        {1, 0, 1, 0, 1, 1, 6, 1, 1, 4, 1, 1, 0, 1, 0, 1},
+                        {1, 0, 5, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 1},
+                        {1, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 3, 0, 5, 0, 1},
+                        {1, 0, 1, 0, 1, 1, 1, 5, 1, 7, 1, 1, 0, 1, 0, 1},
                         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
                         {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1},
                         {1, 0, 4, 0, 3, 0, 2, 0, 5, 0, 4, 0, 3, 0, 2, 1},
@@ -383,12 +383,12 @@ public class LevelManager {
             case 7 -> {
                 levelMonsters.add(MonsterRegistry.create("TRex", 14, 1));
                 levelMonsters.add(MonsterRegistry.create("Eye2", 1, 10));
-                levelMonsters.add(MonsterRegistry.create("Bear", 8, 5)); // 羆哥居中
+                levelMonsters.add(MonsterRegistry.create("Bear", 8, 5));
             }
             case 8 -> {
                 levelMonsters.add(MonsterRegistry.create("Slime", 3, 3));
-                levelMonsters.add(MonsterRegistry.create("Bear", 14, 10)); // A* 尋路大王
-                levelMonsters.add(MonsterRegistry.create("Spirit", 14, 1)); // 穿牆幽靈
+                levelMonsters.add(MonsterRegistry.create("Bear", 14, 10));
+                levelMonsters.add(MonsterRegistry.create("Spirit", 14, 1));
             }
             case 9 -> {
                 levelMonsters.add(MonsterRegistry.create("TRex", 1, 10));
@@ -401,7 +401,7 @@ public class LevelManager {
                 levelMonsters.add(MonsterRegistry.create("Eye2", 14, 1));
                 levelMonsters.add(MonsterRegistry.create("Beast2", 7, 10));
                 levelMonsters.add(MonsterRegistry.create("Bear", 8, 5));
-                levelMonsters.add(MonsterRegistry.create("Spirit", 7, 2)); // 穿牆幽靈干擾
+                levelMonsters.add(MonsterRegistry.create("Spirit", 7, 2));
             }
             default -> {
                 levelMonsters.add(MonsterRegistry.create("Slime", 8, 2));

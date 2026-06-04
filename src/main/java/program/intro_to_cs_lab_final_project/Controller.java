@@ -72,7 +72,7 @@ public class Controller {
 
     private final long ENV_TICK_INTERVAL = 3000;    // 環境更新時間
     private final long ITM_TICK_INTERVAL = 500;    // 食物移動更新時間
-    private final long MON_TICK_INTERVAL = 300;    // 怪物移動更新時間
+    private final long MON_TICK_INTERVAL = 270;    // 怪物移動更新時間
 
     private List<Monster> monsters = new ArrayList<>(); // 儲存當前關卡的所有怪物
     private long lastMonsterMoveTime = 0;               // 記錄上一次怪物移動的時間戳
