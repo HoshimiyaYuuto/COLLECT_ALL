@@ -7,7 +7,7 @@ public class LevelManager {
     private static LevelManager instance;
     private final Random random = new Random();
 
-    private int currentLevel = 8;   // Debug 能改這
+    private int currentLevel = 1;   // Debug 能改這
     private final int MAX_LEVELS = 10;
     private int totalFoodEatenInLevel = 0;
     private int currentRoundFoodCount = 0;
