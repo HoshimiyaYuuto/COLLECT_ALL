@@ -3,33 +3,67 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.paint.LinearGradient?>
+<?import javafx.scene.paint.Stop?>
 <?import javafx.scene.text.Font?>
 
-<StackPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="program.intro_to_cs_lab_final_project.Controller">
+<StackPane prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="program.intro_to_cs_lab_final_project.Controller">
     <children>
+      <ImageView fitHeight="600.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@Background/storyboard6.png" />
+         </image>
+      </ImageView>
 
         <BorderPane>
             <top>
                 <HBox alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" BorderPane.alignment="CENTER">
                     <children>
-                        <Label fx:id="scoreLabel" alignment="BOTTOM_CENTER" contentDisplay="CENTER" text="SCORE: 00000">
+                        <Label fx:id="scoreLabel" alignment="BOTTOM_CENTER" contentDisplay="CENTER" prefWidth="200.0" text="SCORE: 00000">
                             <font>
                                 <Font name="Courier New" size="20.0" />
                             </font>
                             <HBox.margin>
-                                <Insets left="20.0" />
+                                <Insets left="10.0" />
                             </HBox.margin>
                         </Label>
-                        <Region HBox.hgrow="ALWAYS" />
-                        <ImageView fx:id="clockImage" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true" />
-                        <Label fx:id="clockLabel" text="00:00">
+                  <HBox alignment="CENTER" prefHeight="100.0" prefWidth="300.0" spacing="25.0">
+                     <children>
+                        <Button fx:id="Pause" alignment="CENTER" focusTraversable="false" mnemonicParsing="false" onAction="#handlePauseGame" prefHeight="30.0" prefWidth="30.0" style="-fx-background-imae: url('Icon\pause.png');">
+                           <graphic>
+                              <ImageView fx:id="pauseImageView" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@Icon/pause.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic></Button>
+                        <Button fx:id="NoBGM" alignment="CENTER" focusTraversable="false" layoutX="267.0" layoutY="23.0" mnemonicParsing="false" onAction="#handleToggleBGM" prefHeight="30.0" prefWidth="30.0" style="-fx-background-image: Icon\NoBGM.png;">
+                           <graphic>
+                              <ImageView fx:id="bgmImageView" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@Icon/NoBGM.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic></Button>
+                        <Button fx:id="NoSoundEffect" alignment="CENTER" focusTraversable="false" layoutX="285.0" layoutY="23.0" mnemonicParsing="false" onAction="#handleToggleSoundEffect" prefHeight="30.0" prefWidth="30.0" style="-fx-background-image: Icon\Effect.png;">
+                           <graphic>
+                              <ImageView fx:id="soundEffectImageView" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@Icon/NoEffect.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic></Button>
+                     </children>
+                  </HBox>
+                        <Label fx:id="clockLabel" alignment="CENTER_RIGHT" prefWidth="100.0" text="00:00">
                             <font>
                                 <Font name="Courier New" size="20.0" />
                             </font>
@@ -37,7 +71,15 @@
                                 <Insets left="10.0" right="20.0" />
                             </HBox.margin>
                         </Label>
-                        <ImageView fx:id="selectImage" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true" />
+                  <Button fx:id="ExitToLevels" focusTraversable="false" mnemonicParsing="false" onAction="#handleBackToMenuFromGame" prefHeight="25.0" prefWidth="25.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                              <ImageView fx:id="selectImage" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@Icon/exit.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
                     </children>
                 </HBox>
             </top>
@@ -74,28 +116,32 @@
                                 <Font name="Berlin Sans FB Demi Bold" size="25.0" />
                             </font>
                         </Label>
-                        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
-                            <children>
-                        <Button layoutX="285.0" layoutY="60.0" mnemonicParsing="false" onAction="#handleNextLevel" prefHeight="50.0" prefWidth="150.0" text="Next">
-                           <font>
-                              <Font name="Berlin Sans FB Demi Bold" size="30.0" />
-                           </font>
-                        </Button>
-                                <Button mnemonicParsing="false" onAction="#handleRestartGame" prefHeight="50.0" prefWidth="150.0" text="Replay">
+                  <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="30.0">
+                     <children>
+                              <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
+                                  <children>
+                              <Button layoutX="285.0" layoutY="60.0" mnemonicParsing="false" onAction="#handleNextLevel" prefHeight="50.0" prefWidth="120.0" text="Next">
+                                 <font>
+                                    <Font name="Berlin Sans FB Demi Bold" size="25.0" />
+                                 </font>
+                              </Button>
+                                      <Button mnemonicParsing="false" onAction="#handleRestartGame" prefHeight="50.0" prefWidth="120.0" text="Replay">
+                                          <font>
+                                              <Font name="Berlin Sans FB Demi Bold" size="25.0" />
+                                          </font>
+                                      </Button>
+                                  </children>
+                                  <padding>
+                                      <Insets top="50.0" />
+                                  </padding>
+                              </HBox>
+                                <Button mnemonicParsing="false" onAction="#handleBackToMenuFromGame" prefHeight="50.0" prefWidth="170.0" text="Select Level">
                                     <font>
-                                        <Font name="Berlin Sans FB Demi Bold" size="30.0" />
+                                        <Font name="Berlin Sans FB Demi Bold" size="25.0" />
                                     </font>
                                 </Button>
-                                <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#handleBackToMenuFromGame" prefHeight="50.0" prefWidth="150.0" text="Menu">
-                                    <font>
-                                        <Font name="Berlin Sans FB Demi Bold" size="30.0" />
-                                    </font>
-                                </Button>
-                            </children>
-                            <padding>
-                                <Insets top="50.0" />
-                            </padding>
-                        </HBox>
+                     </children>
+                  </VBox>
                     </children>
                 </VBox>
                 <VBox fx:id="Failure" alignment="CENTER" layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
@@ -110,25 +156,105 @@
                                 <Font name="Berlin Sans FB Demi Bold" size="25.0" />
                             </font>
                         </Label>
-                        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
-                            <children>
-                                <Button mnemonicParsing="false" onAction="#handleRestartGame" prefHeight="50.0" prefWidth="150.0" text="Retry">
+                  <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="30.0">
+                     <children>
+                                <Button mnemonicParsing="false" onAction="#handleRestartGame" prefHeight="50.0" prefWidth="120.0" text="Retry">
                                     <font>
-                                        <Font name="Berlin Sans FB Demi Bold" size="30.0" />
+                                        <Font name="Berlin Sans FB Demi Bold" size="25.0" />
                                     </font>
                                 </Button>
-                                <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#handleBackToMenuFromGame" prefHeight="50.0" prefWidth="150.0" text="Menu">
-                                    <font>
-                                        <Font name="Berlin Sans FB Demi Bold" size="30.0" />
-                                    </font>
-                                </Button>
-                            </children>
-                            <padding>
-                                <Insets top="50.0" />
-                            </padding>
-                        </HBox>
+                        <Button mnemonicParsing="false" onAction="#handleBackToMenuFromGame" prefHeight="50.0" prefWidth="170.0" text="Select Level">
+                           <font>
+                              <Font name="Berlin Sans FB Demi Bold" size="25.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </VBox>
                     </children>
                 </VBox>
+            <VBox id="Final" fx:id="Victory10" alignment="CENTER" layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
+               <children>
+                  <Label alignment="CENTER" text="You cleared all stages!" textFill="GOLD">
+                     <font>
+                        <Font name="Eras Bold ITC" size="35.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="30.0" />
+                     </padding>
+                  </Label>
+                  <Label alignment="CENTER" layoutX="124.0" layoutY="141.0" text="You are the">
+                     <font>
+                        <Font name="Eras Bold ITC" size="30.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="-10.0" />
+                     </padding>
+                  </Label>
+                  <Label alignment="CENTER" layoutX="195.0" layoutY="191.0" text="KING of the WORLD!!">
+                     <font>
+                        <Font name="Eras Bold ITC" size="49.0" />
+                     </font>
+                     <textFill>
+                        <LinearGradient endX="1.0" endY="1.0">
+                           <stops>
+                              <Stop>
+                                 <color>
+                                    <Color red="0.9098039269447327" green="0.20000000298023224" blue="0.32156863808631897" />
+                                 </color>
+                              </Stop>
+                              <Stop offset="0.006711409395973154">
+                                 <color>
+                                    <Color red="0.9098039269447327" green="0.20000000298023224" blue="0.32156863808631897" />
+                                 </color>
+                              </Stop>
+                              <Stop offset="0.21521525617940745">
+                                 <color>
+                                    <Color red="0.8235294222831726" green="0.1764705926179886" blue="0.95686274766922" />
+                                 </color>
+                              </Stop>
+                              <Stop offset="0.41968134446445127">
+                                 <color>
+                                    <Color red="0.07058823853731155" green="0.1882352977991104" blue="0.95686274766922" />
+                                 </color>
+                              </Stop>
+                              <Stop offset="0.6092240955966606">
+                                 <color>
+                                    <Color red="0.45490196347236633" green="0.9803921580314636" blue="0.9764705896377563" />
+                                 </color>
+                              </Stop>
+                              <Stop offset="0.8068423637256508">
+                                 <color>
+                                    <Color red="0.9843137264251709" green="0.9921568632125854" blue="0.3294117748737335" />
+                                 </color>
+                              </Stop>
+                              <Stop offset="1.0">
+                                 <color>
+                                    <Color red="0.9176470637321472" green="0.3294117748737335" blue="0.1568627506494522" />
+                                 </color>
+                              </Stop>
+                           </stops>
+                        </LinearGradient>
+                     </textFill>
+                  </Label>
+                  <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
+                     <children>
+                        <Button mnemonicParsing="false" onAction="#handleRestartGame" prefHeight="50.0" prefWidth="120.0" text="Replay">
+                           <font>
+                              <Font name="Berlin Sans FB Demi Bold" size="25.0" />
+                           </font>
+                        </Button>
+                        <Button mnemonicParsing="false" onAction="#handleBackToMenuFromGame" prefHeight="50.0" prefWidth="170.0" text="Select Level">
+                           <font>
+                              <Font name="Berlin Sans FB Demi Bold" size="25.0" />
+                           </font>
+                        </Button>
+                     </children>
+                     <padding>
+                        <Insets top="50.0" />
+                     </padding>
+                  </HBox>
+               </children>
+            </VBox>
             </children>
         </StackPane>
     </children>

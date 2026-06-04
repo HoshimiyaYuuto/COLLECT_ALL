@@ -11,6 +11,9 @@ public class LevelManager {
     private final int MAX_LEVELS = 10;
     private int totalFoodEatenInLevel = 0;
     private int currentRoundFoodCount = 0;
+    private int maxUnlockedLevel = 1;
+    public int getMaxUnlockedLevel() { return maxUnlockedLevel; }
+    public void setMaxUnlockedLevel(int level) { this.maxUnlockedLevel = level; }
 
     private List<FoodNode> backupFoodPool = new ArrayList<>();
 
@@ -30,6 +33,10 @@ public class LevelManager {
     }
 
     public int getCurrentLevel() { return currentLevel; }
+
+    public void setCurrentLevel(int level) {
+        this.currentLevel = level;
+    }
 
     private static class FoodNode {
         int col, row, foodId;
@@ -471,6 +478,10 @@ public class LevelManager {
     private void triggerLevelClear() {
         System.out.println("Level " + currentLevel + " is cleared. Congratulations!!!");
 
+        if (currentLevel == maxUnlockedLevel && maxUnlockedLevel < MAX_LEVELS) {
+            maxUnlockedLevel++;
+        }
+
         if (controller != null) {
             controller.showVictoryPanel();
         }
@@ -489,6 +500,17 @@ public class LevelManager {
 
     // 初始化欲進行之關卡
     public void startNewLevel() {
+        this.totalFoodEatenInLevel = 0;
+        this.currentRoundFoodCount = 0;
+
+        if (mapManager != null) {
+            for (int r = 0; r < 12; r++) {
+                for (int c = 0; c < 16; c++) {
+                    mapManager.setItemType(c, r, 0);
+                }
+            }
+        }
+
         backupFoodPool.clear();
 
         loadCustomLevelData(currentLevel, mapManager);
@@ -509,6 +531,10 @@ public class LevelManager {
         controller.resetPlayerPosition(1, 1);
 
         spawnNextRoundOfFood();
+
+        if (controller != null) {
+            controller.playGameBGM();
+        }
     }
 
     // 玩家失敗

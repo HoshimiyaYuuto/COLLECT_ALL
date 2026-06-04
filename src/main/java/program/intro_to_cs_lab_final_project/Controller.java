@@ -1,9 +1,5 @@
 package program.intro_to_cs_lab_final_project;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.animation.TranslateTransition;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -12,7 +8,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.media.AudioClip;
-import javafx.scene.Scene;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -51,6 +46,29 @@ public class Controller {
     private VBox Victory;
     @FXML
     private VBox Failure;
+    @FXML
+    private ImageView pauseImageView;
+    @FXML
+    private ImageView bgmImageView;
+    @FXML
+    private ImageView soundEffectImageView;
+    @FXML
+    private VBox SelectLevel; // 關卡選單的容器
+    @FXML
+    private ImageView levelBackground;
+    @FXML
+    private VBox Victory10;
+
+    @FXML private Button btnLevel1;
+    @FXML private Button btnLevel2;
+    @FXML private Button btnLevel3;
+    @FXML private Button btnLevel4;
+    @FXML private Button btnLevel5;
+    @FXML private Button btnLevel6;
+    @FXML private Button btnLevel7;
+    @FXML private Button btnLevel8;
+    @FXML private Button btnLevel9;
+    @FXML private Button btnLevel10;
 
     private javafx.animation.Timeline gameLoop;
 
@@ -61,6 +79,8 @@ public class Controller {
     private static MediaPlayer GameBGM; // 遊戲畫面背景音樂
     private AudioClip createBlockSound; // 生成方塊音效
     private AudioClip destroyBlockSound; // 摧毀方塊音效
+    private static AudioClip victoryBGM; // 勝利音樂
+    private static AudioClip failureBGM; // 失敗音樂
 
     // 玩家移動邏輯變數
     private boolean keyUp = false;
@@ -68,12 +88,17 @@ public class Controller {
     private boolean keyLeft = false;
     private boolean keyRight = false;
     private boolean isKeyProcessing = false;
+    private boolean isPaused = false;
+    private boolean isBGMOn = true;
+    private boolean isSoundEffectOn = true;
 
     // 宣告專屬的經理物件
     private Map mapManager;
     private Entity player;
     private SkillManager skillManager;
 
+    private javafx.animation.Timeline countdownTimeline;
+    private int remainingSeconds = 180;
     private boolean isSpacePressed = false; // 防 SPACE 鬼畜連發鎖
     private long keyPressStartTime = 0;      // 紀錄 WASD 按下的時間點
     private KeyCode currentMovingKey = null; // 目前主導移動的按鍵
@@ -93,7 +118,7 @@ public class Controller {
     // 主選單：開始遊戲
     @FXML
     private void handleStartGame(ActionEvent event) {
-        if (clickSound != null) {
+        if (clickSound != null && isSoundEffectOn) {
             clickSound.play();
         }
         MainMenu.setVisible(false);
@@ -124,10 +149,6 @@ public class Controller {
             selectHeroSound.play();
         }
 
-        if (MainMenuBGM != null) {
-            MainMenuBGM.stop();
-        }
-
         Button clickedButton = (Button) event.getSource();
         String btnText = clickedButton.getText().trim();
 
@@ -142,12 +163,40 @@ public class Controller {
             default -> {}
         }
 
-        String GameBGMPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Musics/16 - Melancholia.mp3").toExternalForm();
-        Media GameBGMMedia = new Media(GameBGMPath);
-        GameBGM = new MediaPlayer(GameBGMMedia);
-        GameBGM.setVolume(0.1);
-        GameBGM.setCycleCount(MediaPlayer.INDEFINITE);
-        GameBGM.play();
+        refreshLevelButtons();
+
+        // 切換到 GameStage.fxml 畫面
+        //String fxmlPath = "/program/intro_to_cs_lab_final_project/GameStage.fxml";
+        //FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+        //Parent gameView = loader.load();
+
+        //Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        //window.getScene().setRoot(gameView);
+        if (SelectHero != null) SelectHero.setVisible(false);
+        if (levelBackground != null) levelBackground.setVisible(true);
+        if (SelectLevel != null) SelectLevel.setVisible(true);
+    }
+
+    @FXML
+    private void handleLevelSelect(ActionEvent event) throws Exception {
+        if (clickSound != null && isSoundEffectOn) {
+            clickSound.play();
+        }
+
+        // 關閉主選單的背景音樂
+        if (MainMenuBGM != null) {
+            MainMenuBGM.stop();
+        }
+
+        // 透過按鈕的 id 取得對應的關卡數字
+        Button clickedButton = (Button) event.getSource();
+        String levelId = clickedButton.getId(); // 得到 "1", "2", "3" 等字串
+        int selectedLevel = Integer.parseInt(levelId);
+
+        System.out.println("🚀 玩家選擇了第 " + selectedLevel + " 關，正式進入遊戲！");
+
+        // 🌟 將選好的關卡數字指派給單例 LevelManager
+        LevelManager.getInstance().setCurrentLevel(selectedLevel);
 
         // 切換到 GameStage.fxml 畫面
         String fxmlPath = "/program/intro_to_cs_lab_final_project/GameStage.fxml";
@@ -159,9 +208,76 @@ public class Controller {
     }
 
     @FXML
+    private void handleBackToMenuFromLevels(ActionEvent event) {
+        if (clickSound != null && isSoundEffectOn) {
+            clickSound.play();
+        }
+        if (SelectLevel != null) SelectLevel.setVisible(false);
+        if (levelBackground != null) levelBackground.setVisible(false);
+        if (MainMenu != null) MainMenu.setVisible(true);
+    }
+
+    @FXML
+    private void handleBackToHeroSelectFromLevels(ActionEvent event) {
+        if (clickSound != null && isSoundEffectOn) {
+            clickSound.play();
+        }
+        // 隱藏關卡選單與背景，顯示選角畫面
+        if (SelectLevel != null) SelectLevel.setVisible(false);
+        if (levelBackground != null) levelBackground.setVisible(false);
+        if (SelectHero != null) SelectHero.setVisible(true);
+    }
+
+    @FXML
+    private void handleBackToMenuFromGame(ActionEvent event) throws Exception {
+        // 1. 安全關閉所有與戰鬥（GameStage）相關的計時器與音樂
+        if (countdownTimeline != null) countdownTimeline.stop();
+        if (GameBGM != null) GameBGM.stop();
+        if (victoryBGM != null) victoryBGM.stop();
+        if (failureBGM != null) failureBGM.stop();
+
+        // 2. 重新載入 Menu.fxml（包含主選單、選角、選關卡的那個大容器）
+        String menuPath = "/program/intro_to_cs_lab_final_project/Menu.fxml";
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(menuPath));
+        Parent root = loader.load();
+
+        // 3. 取得加載該 Menu.fxml 產生的全新 Controller 實體
+        Controller menuController = loader.getController();
+
+        // 4. 🌟 關鍵進階特技 🌟
+        // 既然重載了 Menu.fxml，我們叫這個新的 Controller 直接跳過前兩頁，
+        // 隱藏 MainMenu 與 SelectHero，直接把「選關卡（SelectLevel）」顯示出來！
+        if (menuController.MainMenu != null) menuController.MainMenu.setVisible(false);
+        if (menuController.SelectHero != null) menuController.SelectHero.setVisible(false);
+        if (menuController.levelBackground != null) menuController.levelBackground.setVisible(true);
+        if (menuController.SelectLevel != null) menuController.SelectLevel.setVisible(true);
+
+        // 5. 🌟 刷新關卡鎖定狀態 🌟
+        // 這樣玩家如果剛剛過關了，回到這頁時，新解鎖的關卡才會立刻「由灰轉彩」！
+        menuController.refreshLevelButtons();
+
+        // 6. 🌟 音樂不中斷保險 🌟
+        // 既然回到了關卡選單，確保主選單音樂有被播出來（如果沒播的話就補播）
+        // 註：這會讀取 initialize() 裡面的 MainMenuBGM
+        if (Controller.MainMenuBGM != null) {
+            Controller.MainMenuBGM.stop(); // 先乾淨停掉舊的
+            Controller.MainMenuBGM.setVolume(0.4);
+            Controller.MainMenuBGM.setCycleCount(MediaPlayer.INDEFINITE);
+            Controller.MainMenuBGM.play(); // 🎵 重新奏樂！
+        }
+
+        // 7. 正式將視窗根節點替換為新載入的選單畫面
+        Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        window.getScene().setRoot(root);
+    }
+    /*
+    @FXML
     private void handleBackToMenuFromGame(ActionEvent event) throws Exception {
         //if (clickSound != null) clickSound.play();
+        if (countdownTimeline != null) countdownTimeline.stop();
         if (GameBGM != null) GameBGM.stop(); // 停掉戰鬥音樂
+        if (victoryBGM != null) victoryBGM.stop();
+        if (failureBGM != null) failureBGM.stop();
 
         // 重新載入 Menu.fxml 回到開場
         String menuPath = "/program/intro_to_cs_lab_final_project/Menu.fxml";
@@ -169,14 +285,18 @@ public class Controller {
         Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
         window.getScene().setRoot(root);
     }
+     */
 
     @FXML
     private void handleRestartGame(ActionEvent event) {
 //        if (clickSound != null) clickSound.play();
+        if (victoryBGM != null) victoryBGM.stop();
+        if (failureBGM != null) failureBGM.stop();
 
         if (ResultContainer != null) ResultContainer.setVisible(false);
         if (Victory != null) Victory.setVisible(false);
         if (Failure != null) Failure.setVisible(false);
+        if (Victory10 != null) Victory10.setVisible(false);
 
         // 重新啟動遊戲主迴圈
         if (gameLoop != null) gameLoop.play();
@@ -184,15 +304,17 @@ public class Controller {
         System.out.println("🔄 觸發重新開始當前關卡！");
         resetLevelScore();
         LevelManager.getInstance().startNewLevel();
+
+        startCountdownTimer();
     }
 
     @FXML
     private void handleNextLevel(ActionEvent event) {
-        if (clickSound != null) clickSound.play();
+//        if (clickSound != null) clickSound.play();
+        if (victoryBGM != null) victoryBGM.stop();
 
         if (ResultContainer != null) ResultContainer.setVisible(false);
         if (Victory != null) Victory.setVisible(false);
-
         int currentLvl = LevelManager.getInstance().getCurrentLevel();
 
         if (currentLvl < 10) {
@@ -200,7 +322,126 @@ public class Controller {
             if (gameLoop != null) gameLoop.play();
 
         System.out.println("⏩ 觸發進入下一關！");
-        LevelManager.getInstance().startNewLevel();
+//        LevelManager.getInstance().startNewLevel();
+          LevelManager.getInstance().advanceToNextLevel();
+          startCountdownTimer();
+        }
+    }
+
+    @FXML
+    private void handlePauseGame(ActionEvent event) {
+        if (ResultContainer != null && ResultContainer.isVisible()) {
+            return;
+        }
+
+        isPaused = !isPaused; // 切換暫停狀態
+
+        if (isPaused) {
+            System.out.println("⏸️ 遊戲暫停");
+
+            // 停止所有計時迴圈
+            if (gameLoop != null) gameLoop.stop();
+            if (countdownTimeline != null) countdownTimeline.stop();
+
+            // 2. 暫停背景音樂 (看你想不想讓音樂繼續播，不想播就 pause)
+            // if (GameBGM != null) GameBGM.pause();
+
+            // 3. 切換按鈕圖案為播放鍵 (▶️)
+            String playImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/start.png").toExternalForm();
+            pauseImageView.setImage(new Image(playImgPath));
+
+        } else {
+            System.out.println("▶️ 遊戲恢復");
+
+            // 1. 恢復所有計時迴圈
+            if (gameLoop != null) gameLoop.play();
+            if (countdownTimeline != null) countdownTimeline.play();
+
+            // 2. 恢復背景音樂
+            // if (GameBGM != null) GameBGM.play();
+
+            try {
+                // 3. 切換按鈕圖案回暫停鍵 (⏸️)
+                String pauseImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/pause.png").toExternalForm();
+                pauseImageView.setImage(new Image(pauseImgPath));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    @FXML
+    private void handleToggleBGM(ActionEvent event) {
+        if (GameBGM == null) return;
+
+        isBGMOn = !isBGMOn;
+
+        if (isBGMOn) {
+            System.out.println("🎵 背景音樂：開啟");
+
+            // 1. 如果遊戲不是處於暫停狀態，才把音樂播回來
+//            if (!isPaused) {
+                GameBGM.play();
+//            }
+
+            // 2. 切換圖示為「有音樂」的狀態
+            if (bgmImageView != null) {
+                try {
+                    // 假設你原本正常的音樂圖示叫 BGM.png
+                    String bgmImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/NoBGM.png").toExternalForm();
+                    bgmImageView.setImage(new Image(bgmImgPath));
+                } catch (Exception e) {
+                    System.err.println("找不到 BGM.png 圖片");
+                }
+            }
+        } else {
+            System.out.println("🔇 背景音樂：靜音/暫停");
+
+            // 1. 暫停背景音樂
+            GameBGM.pause();
+
+            // 2. 切換圖示為「靜音」的狀態（NoBGM.png）
+            if (bgmImageView != null) {
+                try {
+                    String noBgmImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/BGM.png").toExternalForm();
+                    bgmImageView.setImage(new Image(noBgmImgPath));
+                } catch (Exception e) {
+                    System.err.println("找不到 NoBGM.png 圖片");
+                }
+            }
+        }
+    }
+
+    @FXML
+    private void handleToggleSoundEffect(ActionEvent event) {
+        isSoundEffectOn = !isSoundEffectOn; // 切換音效開關狀態
+
+        if (isSoundEffectOn) {
+            System.out.println("🔊 遊戲音效：開啟");
+
+            // 切換圖示為「有音效」的狀態
+            if (soundEffectImageView != null) {
+                try {
+                    // 假設你原本正常的音效圖示叫 Effect.png
+                    String effectImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/NoEffect.png").toExternalForm();
+                    soundEffectImageView.setImage(new Image(effectImgPath));
+                } catch (Exception e) {
+                    System.err.println("找不到 Effect.png 圖片");
+                }
+            }
+        } else {
+            System.out.println("🔇 遊戲音效：靜音");
+
+            // 切換圖示為「靜音」的狀態（NoEffect.png）
+            if (soundEffectImageView != null) {
+                try {
+                    String noEffectImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/Effect.png").toExternalForm();
+                    soundEffectImageView.setImage(new Image(noEffectImgPath));
+                } catch (Exception e) {
+                    System.err.println("找不到 NoEffect.png 圖片");
+                }
+            }
         }
     }
 
@@ -212,7 +453,7 @@ public class Controller {
             String BGMPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Musics/4 - Village.mp3").toExternalForm();
             Media BGMMedia = new Media(BGMPath);
             MainMenuBGM = new MediaPlayer(BGMMedia);
-            MainMenuBGM.setVolume(0.1);
+            MainMenuBGM.setVolume(0.4);
             MainMenuBGM.setCycleCount(MediaPlayer.INDEFINITE);
             MainMenuBGM.play();
 
@@ -229,23 +470,42 @@ public class Controller {
             selectHeroSound = new AudioClip(selectHeroPath);
             closeSound.setVolume(0.6);
 
-            // 生成方塊音效
-            String createPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Whoosh & Slash/Slash.wav").toExternalForm();
-            createBlockSound = new AudioClip(createPath);
-            // createBlockSound.setVolume(0.5);
+            // 勝利音樂
+            String victoryPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Musics/20 - Good Time.mp3").toExternalForm();
+            victoryBGM = new AudioClip(victoryPath);
+            victoryBGM.setVolume(0.4);
+            victoryBGM.setCycleCount(AudioClip.INDEFINITE);
 
-            // 摧毀方塊音效
-            String destroyPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Whoosh & Slash/Sword2.wav").toExternalForm();
-            destroyBlockSound = new AudioClip(destroyPath);
-            // destroyBlockSound.setVolume(0.5);
-
-            createBlockSound.play(0.0);
-            destroyBlockSound.play(0.0);
+            // 失敗音樂
+            String failurePath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Musics/SadHamster.mp3").toExternalForm();
+            failureBGM = new AudioClip(failurePath);
+            failureBGM.setVolume(0.2);
+            failureBGM.setCycleCount(AudioClip.INDEFINITE);
 
             if (MainMenu != null) MainMenu.setVisible(true);
             if (SelectHero != null) SelectHero.setVisible(false);
             return;
         }
+
+        // 遊戲背景音樂
+        String GameBGMPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Musics/16 - Melancholia.mp3").toExternalForm();
+        Media GameBGMMedia = new Media(GameBGMPath);
+        GameBGM = new MediaPlayer(GameBGMMedia);
+        GameBGM.setVolume(0.05);
+        GameBGM.setCycleCount(MediaPlayer.INDEFINITE);
+        GameBGM.play();
+
+        // 生成方塊音效
+        String createPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Whoosh & Slash/Slash.wav").toExternalForm();
+        createBlockSound = new AudioClip(createPath);
+        createBlockSound.setVolume(0.6);
+        createBlockSound.play(0.0);
+
+        // 摧毀方塊音效
+        String destroyPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Whoosh & Slash/Sword2.wav").toExternalForm();
+        destroyBlockSound = new AudioClip(destroyPath);
+        destroyBlockSound.setVolume(0.6);
+        destroyBlockSound.play(0.0);
 
         mapManager = new Map();
         skillManager = new SkillManager(mapManager, mapGrid);
@@ -329,6 +589,10 @@ public class Controller {
 
                 // 監聽按下按鍵：打開方向，或者觸發單次施法
                 scene.setOnKeyPressed(event -> {
+                    if (isPaused) {
+                        return;
+                    }
+
                     KeyCode code = event.getCode();
 
                     // 轉向優先邏輯
@@ -381,10 +645,10 @@ public class Controller {
 
                                 // 判斷生成/摧毀技能方塊
                                 if (frontTile == myHeroTile && !isMonsterStandingThere) {
-                                    if (destroyBlockSound != null) destroyBlockSound.play();
+                                    if (destroyBlockSound != null && isSoundEffectOn) destroyBlockSound.play();
                                     skillManager.castDestroySkill(player, heroName);
                                 } else {
-                                    if (createBlockSound != null) createBlockSound.play();
+                                    if (createBlockSound != null && isSoundEffectOn) createBlockSound.play();
                                     skillManager.castCreateSkill(player, monsters, heroName);
                                 }
 
@@ -441,10 +705,13 @@ public class Controller {
                             for (Monster m : monsters) {
                                 if (m.getCol() == playerCol && m.getRow() == playerRow) {
                                     System.out.println("You are died");
+                                    if (countdownTimeline != null) countdownTimeline.stop();
                                     if (GameBGM != null) GameBGM.stop();
 
                                     if (ResultContainer != null) ResultContainer.setVisible(true);
                                     if (Failure != null) Failure.setVisible(true);
+
+                                    if (failureBGM != null) failureBGM.play();
 
                                     LevelManager.getInstance().triggerGameOver();
                                     return; // 直接中斷迴圈，不再執行後續移動
@@ -556,6 +823,8 @@ public class Controller {
                 );
                 gameLoop.setCycleCount(javafx.animation.Timeline.INDEFINITE);
                 gameLoop.play();
+
+                startCountdownTimer();
             }
         });
     }
@@ -603,9 +872,140 @@ public class Controller {
 
     public void showVictoryPanel() {
         javafx.application.Platform.runLater(() -> {
+            if (countdownTimeline != null) countdownTimeline.stop();
+            if (GameBGM != null) GameBGM.stop();
+
+            // 顯示最外層的透明黑底容器
+            if (ResultContainer != null) ResultContainer.setVisible(true);
+
+            // 🌟 核心邏輯：取得當前關卡編號
+            int currentLvl = LevelManager.getInstance().getCurrentLevel();
+
+            if (currentLvl >= 10) {
+                // 🏆 如果是第 10 關（最後一關）通關
+                System.out.println("👑 恭喜終極大通關！成為世界之王！");
+                if (Victory != null) Victory.setVisible(false);       // 關閉普通通關
+                if (Victory10 != null) Victory10.setVisible(true);      // 秀出「KING of the WORLD!!」
+            } else {
+                // 🏳️ 如果是 1 ~ 9 關通關
+                if (Victory10 != null) Victory10.setVisible(false);     // 關閉大通關
+                if (Victory != null) Victory.setVisible(true);        // 秀出普通通關（帶有 Next 按鈕）
+            }
+
+            if (victoryBGM != null) {
+                victoryBGM.play();
+            }
+
+            stopGameLoop(); // 停止遊戲世界的 Timeline 更新
+        });
+    }
+    /*
+    public void showVictoryPanel() {
+        javafx.application.Platform.runLater(() -> {
+            if (countdownTimeline != null) countdownTimeline.stop();
+            if (GameBGM != null) GameBGM.stop();
             if (ResultContainer != null) ResultContainer.setVisible(true);
             if (Victory != null) Victory.setVisible(true);
+            if (victoryBGM != null) victoryBGM.play();
             stopGameLoop(); // 停止遊戲世界
         });
+    }
+     */
+
+    public void playGameBGM() {
+        if (GameBGM != null) {
+            GameBGM.stop();
+            GameBGM.setVolume(0.1);
+            GameBGM.setCycleCount(MediaPlayer.INDEFINITE);
+            GameBGM.play();
+        }
+    }
+
+    private void startCountdownTimer() {
+        // 每次開局或重置關卡時，先確保舊的計時器被停掉
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+        }
+
+        // 初始化時間（3分鐘）
+        remainingSeconds = 180;
+        updateClockLabel();
+
+        // 建立每 1 秒執行一次的 Timeline
+        countdownTimeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), e -> {
+                    remainingSeconds--;
+                    updateClockLabel();
+
+                    // 時間到，觸發遊戲失敗
+                    if (remainingSeconds <= 0) {
+                        countdownTimeline.stop();
+                        triggerTimeOutFailure();
+                    }
+                })
+        );
+        countdownTimeline.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+        countdownTimeline.play();
+    }
+
+    // 負責把秒數轉成 02:59 這種格式並顯示
+    private void updateClockLabel() {
+        int minutes = remainingSeconds / 60;
+        int seconds = remainingSeconds % 60;
+        String timeString = String.format("%02d:%02d", minutes, seconds);
+
+        javafx.application.Platform.runLater(() -> {
+            if (clockLabel != null) {
+                clockLabel.setText(timeString);
+            }
+        });
+    }
+
+    // 時間到的失敗處理邏輯（與被怪獸撞到相同）
+    private void triggerTimeOutFailure() {
+        javafx.application.Platform.runLater(() -> {
+            stopGameLoop(); // 停止原本的主迴圈
+            if (GameBGM != null) GameBGM.stop();
+            if (ResultContainer != null) ResultContainer.setVisible(true);
+            if (Failure != null) Failure.setVisible(true);
+            if (failureBGM != null) failureBGM.play();
+        });
+
+        LevelManager.getInstance().triggerGameOver();
+    }
+
+    private void refreshLevelButtons() {
+        // 把 10 個按鈕按順序放進 List 方便用迴圈處理
+        List<Button> levelButtons = Arrays.asList(
+                btnLevel1, btnLevel2, btnLevel3, btnLevel4, btnLevel5,
+                btnLevel6, btnLevel7, btnLevel8, btnLevel9, btnLevel10
+        );
+
+        int maxUnlocked = LevelManager.getInstance().getMaxUnlockedLevel();
+
+        // 建立 JavaFX 的變色濾鏡特效
+        javafx.scene.effect.ColorAdjust grayscaleEffect = new javafx.scene.effect.ColorAdjust();
+        grayscaleEffect.setSaturation(-0.5); // 飽和度設為 -1，圖片就會徹底變成黑白灰色！
+
+        for (int i = 0; i < levelButtons.size(); i++) {
+            Button btn = levelButtons.get(i);
+            if (btn == null) continue;
+
+            int levelNum = i + 1; // 關卡編號從 1 開始
+
+            if (levelNum <= maxUnlocked) {
+                // 🔓 已解鎖的關卡：恢復彩色、允許點擊
+                btn.setDisable(false);
+                if (btn.getGraphic() != null) {
+                    btn.getGraphic().setEffect(null); // 清除灰色濾鏡
+                }
+            } else {
+                // 🔒 未解鎖的關卡：禁止點擊、變成灰色
+                btn.setDisable(true);
+                if (btn.getGraphic() != null) {
+                    btn.getGraphic().setEffect(grayscaleEffect); // 附加灰色濾鏡
+                }
+            }
+        }
     }
 }
