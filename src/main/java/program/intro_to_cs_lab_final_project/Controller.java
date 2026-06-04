@@ -7,6 +7,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.input.KeyCode;
@@ -19,6 +20,8 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.Media;
 
 import java.util.*;
 
@@ -42,12 +45,22 @@ public class Controller {
     private Button ExitGame;
     @FXML
     private VBox SelectHero;
+    @FXML
+    private StackPane ResultContainer;
+    @FXML
+    private VBox Victory;
+    @FXML
+    private VBox Failure;
 
     private javafx.animation.Timeline gameLoop;
 
-    private AudioClip clickSound;
-    private AudioClip closeSound;
-    private AudioClip selectHeroSound;
+    private static MediaPlayer MainMenuBGM; // 主選班背景音樂
+    private AudioClip clickSound; // 進入遊戲音效
+    private AudioClip closeSound; // Exit 音效
+    private AudioClip selectHeroSound; // 選角色音效
+    private static MediaPlayer GameBGM; // 遊戲畫面背景音樂
+    private AudioClip createBlockSound; // 生成方塊音效
+    private AudioClip destroyBlockSound; // 摧毀方塊音效
 
     // 玩家移動邏輯變數
     private boolean keyUp = false;
@@ -111,6 +124,10 @@ public class Controller {
             selectHeroSound.play();
         }
 
+        if (MainMenuBGM != null) {
+            MainMenuBGM.stop();
+        }
+
         Button clickedButton = (Button) event.getSource();
         String btnText = clickedButton.getText().trim();
 
@@ -125,6 +142,13 @@ public class Controller {
             default -> {}
         }
 
+        String GameBGMPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Musics/16 - Melancholia.mp3").toExternalForm();
+        Media GameBGMMedia = new Media(GameBGMPath);
+        GameBGM = new MediaPlayer(GameBGMMedia);
+        GameBGM.setVolume(0.1);
+        GameBGM.setCycleCount(MediaPlayer.INDEFINITE);
+        GameBGM.play();
+
         // 切換到 GameStage.fxml 畫面
         String fxmlPath = "/program/intro_to_cs_lab_final_project/GameStage.fxml";
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
@@ -134,19 +158,89 @@ public class Controller {
         window.getScene().setRoot(gameView);
     }
 
+    @FXML
+    private void handleBackToMenuFromGame(ActionEvent event) throws Exception {
+        //if (clickSound != null) clickSound.play();
+        if (GameBGM != null) GameBGM.stop(); // 停掉戰鬥音樂
+
+        // 重新載入 Menu.fxml 回到開場
+        String menuPath = "/program/intro_to_cs_lab_final_project/Menu.fxml";
+        Parent root = FXMLLoader.load(getClass().getResource(menuPath));
+        Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        window.getScene().setRoot(root);
+    }
+
+    @FXML
+    private void handleRestartGame(ActionEvent event) {
+//        if (clickSound != null) clickSound.play();
+
+        if (ResultContainer != null) ResultContainer.setVisible(false);
+        if (Victory != null) Victory.setVisible(false);
+        if (Failure != null) Failure.setVisible(false);
+
+        // 重新啟動遊戲主迴圈
+        if (gameLoop != null) gameLoop.play();
+
+        System.out.println("🔄 觸發重新開始當前關卡！");
+        resetLevelScore();
+        LevelManager.getInstance().startNewLevel();
+    }
+
+    @FXML
+    private void handleNextLevel(ActionEvent event) {
+        if (clickSound != null) clickSound.play();
+
+        if (ResultContainer != null) ResultContainer.setVisible(false);
+        if (Victory != null) Victory.setVisible(false);
+
+        int currentLvl = LevelManager.getInstance().getCurrentLevel();
+
+        if (currentLvl < 10) {
+            // 重新啟動遊戲主迴圈
+            if (gameLoop != null) gameLoop.play();
+
+        System.out.println("⏩ 觸發進入下一關！");
+        LevelManager.getInstance().startNewLevel();
+        }
+    }
+
     // 遊戲初始化
     @FXML
     public void initialize() {
         if (mapGrid == null) {
+            // 主選單背景音樂
+            String BGMPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Musics/4 - Village.mp3").toExternalForm();
+            Media BGMMedia = new Media(BGMPath);
+            MainMenuBGM = new MediaPlayer(BGMMedia);
+            MainMenuBGM.setVolume(0.1);
+            MainMenuBGM.setCycleCount(MediaPlayer.INDEFINITE);
+            MainMenuBGM.play();
+
+            // 進入遊戲音效
             String clickPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Alert/Alert4.wav").toExternalForm();
             clickSound = new AudioClip(clickPath);
 
+            // Exit 音效
             String closePath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Menu/Menu12.wav").toExternalForm();
             closeSound = new AudioClip(closePath);
 
+            // 選角色音效
             String selectHeroPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Menu/Accept5.wav").toExternalForm();
             selectHeroSound = new AudioClip(selectHeroPath);
             closeSound.setVolume(0.6);
+
+            // 生成方塊音效
+            String createPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Whoosh & Slash/Slash.wav").toExternalForm();
+            createBlockSound = new AudioClip(createPath);
+            // createBlockSound.setVolume(0.5);
+
+            // 摧毀方塊音效
+            String destroyPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Audio/Sounds/Whoosh & Slash/Sword2.wav").toExternalForm();
+            destroyBlockSound = new AudioClip(destroyPath);
+            // destroyBlockSound.setVolume(0.5);
+
+            createBlockSound.play(0.0);
+            destroyBlockSound.play(0.0);
 
             if (MainMenu != null) MainMenu.setVisible(true);
             if (SelectHero != null) SelectHero.setVisible(false);
@@ -287,8 +381,10 @@ public class Controller {
 
                                 // 判斷生成/摧毀技能方塊
                                 if (frontTile == myHeroTile && !isMonsterStandingThere) {
+                                    if (destroyBlockSound != null) destroyBlockSound.play();
                                     skillManager.castDestroySkill(player, heroName);
                                 } else {
+                                    if (createBlockSound != null) createBlockSound.play();
                                     skillManager.castCreateSkill(player, monsters, heroName);
                                 }
 
@@ -345,6 +441,11 @@ public class Controller {
                             for (Monster m : monsters) {
                                 if (m.getCol() == playerCol && m.getRow() == playerRow) {
                                     System.out.println("You are died");
+                                    if (GameBGM != null) GameBGM.stop();
+
+                                    if (ResultContainer != null) ResultContainer.setVisible(true);
+                                    if (Failure != null) Failure.setVisible(true);
+
                                     LevelManager.getInstance().triggerGameOver();
                                     return; // 直接中斷迴圈，不再執行後續移動
                                 }
@@ -498,5 +599,13 @@ public class Controller {
 
     public void stopGameLoop() {
         if (gameLoop != null) gameLoop.stop();
+    }
+
+    public void showVictoryPanel() {
+        javafx.application.Platform.runLater(() -> {
+            if (ResultContainer != null) ResultContainer.setVisible(true);
+            if (Victory != null) Victory.setVisible(true);
+            stopGameLoop(); // 停止遊戲世界
+        });
     }
 }

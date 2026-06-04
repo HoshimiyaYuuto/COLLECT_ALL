@@ -60,9 +60,9 @@
             </bottom>
         </BorderPane>
 
-        <StackPane style="-fx-background-color: rgba(0, 0, 0, 0.5);" visible="false">
+        <StackPane fx:id="ResultContainer" style="-fx-background-color: rgba(0, 0, 0, 0.5);" visible="false">
             <children>
-                <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
+                <VBox fx:id="Victory" alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
                     <children>
                         <Label alignment="CENTER" text="VICTORY!" textFill="GOLD">
                             <font>
@@ -76,12 +76,17 @@
                         </Label>
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
                             <children>
-                                <Button mnemonicParsing="false" prefHeight="50.0" prefWidth="150.0" text="Replay">
+                        <Button layoutX="285.0" layoutY="60.0" mnemonicParsing="false" onAction="#handleNextLevel" prefHeight="50.0" prefWidth="150.0" text="Next">
+                           <font>
+                              <Font name="Berlin Sans FB Demi Bold" size="30.0" />
+                           </font>
+                        </Button>
+                                <Button mnemonicParsing="false" onAction="#handleRestartGame" prefHeight="50.0" prefWidth="150.0" text="Replay">
                                     <font>
                                         <Font name="Berlin Sans FB Demi Bold" size="30.0" />
                                     </font>
                                 </Button>
-                                <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" prefHeight="50.0" prefWidth="150.0" text="Menu">
+                                <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#handleBackToMenuFromGame" prefHeight="50.0" prefWidth="150.0" text="Menu">
                                     <font>
                                         <Font name="Berlin Sans FB Demi Bold" size="30.0" />
                                     </font>
@@ -93,7 +98,7 @@
                         </HBox>
                     </children>
                 </VBox>
-                <VBox alignment="CENTER" layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
+                <VBox fx:id="Failure" alignment="CENTER" layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
                     <children>
                         <Label alignment="CENTER" text="GAME OVER" textFill="#fb3030">
                             <font>
@@ -107,12 +112,12 @@
                         </Label>
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
                             <children>
-                                <Button mnemonicParsing="false" prefHeight="50.0" prefWidth="150.0" text="Retry">
+                                <Button mnemonicParsing="false" onAction="#handleRestartGame" prefHeight="50.0" prefWidth="150.0" text="Retry">
                                     <font>
                                         <Font name="Berlin Sans FB Demi Bold" size="30.0" />
                                     </font>
                                 </Button>
-                                <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" prefHeight="50.0" prefWidth="150.0" text="Menu">
+                                <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#handleBackToMenuFromGame" prefHeight="50.0" prefWidth="150.0" text="Menu">
                                     <font>
                                         <Font name="Berlin Sans FB Demi Bold" size="30.0" />
                                     </font>

@@ -470,16 +470,21 @@ public class LevelManager {
     // 處理關卡通關
     private void triggerLevelClear() {
         System.out.println("Level " + currentLevel + " is cleared. Congratulations!!!");
-        if (currentLevel < MAX_LEVELS) {
-            currentLevel++;
-            totalFoodEatenInLevel = 0;
-            currentRoundFoodCount = 0;
-            controller.resetLevelScore();
-            startNewLevel();
-        } else {
-            System.out.println("YOU WIN!!! You are the CHAMPION!!!");
-            controller.stopGameLoop();
+
+        if (controller != null) {
+            controller.showVictoryPanel();
         }
+
+        //if (currentLevel < MAX_LEVELS) {
+        //    currentLevel++;
+        //    totalFoodEatenInLevel = 0;
+        //    currentRoundFoodCount = 0;
+        //    controller.resetLevelScore();
+        //    startNewLevel();
+        //} else {
+        //    System.out.println("YOU WIN!!! You are the CHAMPION!!!");
+        //    controller.stopGameLoop();
+        //}
     }
 
     // 初始化欲進行之關卡
@@ -510,5 +515,15 @@ public class LevelManager {
     public void triggerGameOver() {
         System.out.println("GG... Game Over... :(");
         controller.stopGameLoop();
+    }
+
+    public void advanceToNextLevel() {
+        if (currentLevel < MAX_LEVELS) {
+            currentLevel++; // 關卡加 1
+            totalFoodEatenInLevel = 0; // 吃掉的食物歸零
+            currentRoundFoodCount = 0; // 當前輪次食物歸零
+            controller.resetLevelScore(); // 分數重置
+            startNewLevel(); // 載入新關卡地圖與怪物
+        }
     }
 }
