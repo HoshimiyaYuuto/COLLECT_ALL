@@ -146,7 +146,7 @@
                 </VBox>
                 <VBox fx:id="Failure" alignment="CENTER" layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
                     <children>
-                        <Label alignment="CENTER" text="GAME OVER" textFill="#fb3030">
+                        <Label alignment="CENTER" prefWidth="600.0" text="GAME OVER" textFill="#fb3030">
                             <font>
                                 <Font name="Eras Bold ITC" size="75.0" />
                             </font>
