@@ -92,7 +92,7 @@
             <bottom>
                 <HBox alignment="CENTER" prefHeight="40.0" prefWidth="600.0" BorderPane.alignment="CENTER">
                     <children>
-                        <Label text="[WASD]: 移動 | [Space]: 攻擊/破冰" textFill="#666666">
+                        <Label text="[WASD]: 移動 | [Space]: 生成/摧毀技能方塊" textFill="#666666">
                             <font>
                                 <Font name="Courier New" size="14.0" />
                             </font>
