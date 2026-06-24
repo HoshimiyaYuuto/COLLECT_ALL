@@ -21,43 +21,24 @@ import javafx.scene.media.Media;
 import java.util.*;
 
 public class Controller {
-    @FXML
-    private Label scoreLabel;
-    @FXML
-    private Label clockLabel;
-    @FXML
-    private ImageView clockImage;
-    @FXML
-    private ImageView selectImage;
-    @FXML
-    private GridPane mapGrid;
-    private static String heroImageFile;
-    @FXML
-    private VBox MainMenu;
-    @FXML
-    private Button StartGame;
-    @FXML
-    private Button ExitGame;
-    @FXML
-    private VBox SelectHero;
-    @FXML
-    private StackPane ResultContainer;
-    @FXML
-    private VBox Victory;
-    @FXML
-    private VBox Failure;
-    @FXML
-    private ImageView pauseImageView;
-    @FXML
-    private ImageView bgmImageView;
-    @FXML
-    private ImageView soundEffectImageView;
-    @FXML
-    private VBox SelectLevel; // 關卡選單的容器
-    @FXML
-    private ImageView levelBackground;
-    @FXML
-    private VBox Victory10;
+    @FXML private Label scoreLabel;
+    @FXML private Label clockLabel;
+    @FXML private ImageView clockImage;
+    @FXML private ImageView selectImage;
+    @FXML private GridPane mapGrid;
+    @FXML private VBox MainMenu;
+    @FXML private Button StartGame;
+    @FXML private Button ExitGame;
+    @FXML private VBox SelectHero;
+    @FXML private StackPane ResultContainer;
+    @FXML private VBox Victory;
+    @FXML private VBox Failure;
+    @FXML private ImageView pauseImageView;
+    @FXML private ImageView bgmImageView;
+    @FXML private ImageView soundEffectImageView;
+    @FXML private VBox SelectLevel; // 關卡選單的容器
+    @FXML private ImageView levelBackground;
+    @FXML private VBox Victory10;
 
     @FXML private Button btnLevel1;
     @FXML private Button btnLevel2;
@@ -72,6 +53,7 @@ public class Controller {
 
     private javafx.animation.Timeline gameLoop;
 
+    private static String heroImageFile;
     private static MediaPlayer MainMenuBGM; // 主選班背景音樂
     private AudioClip clickSound; // 進入遊戲音效
     private AudioClip closeSound; // Exit 音效
@@ -186,9 +168,9 @@ public class Controller {
         String levelId = clickedButton.getId(); // 得到 "1", "2", "3" 等字串
         int selectedLevel = Integer.parseInt(levelId);
 
-        System.out.println("🚀 玩家選擇了第 " + selectedLevel + " 關，正式進入遊戲！");
+        System.out.println("You select level " + selectedLevel + ", entering the stage!");
 
-        // 🌟 將選好的關卡數字指派給單例 LevelManager
+        // 將選好的關卡數字指派給單例 LevelManager
         LevelManager.getInstance().setCurrentLevel(selectedLevel);
 
         // 切換到 GameStage.fxml 畫面
@@ -284,9 +266,9 @@ public class Controller {
             // 重新啟動遊戲主迴圈
             if (gameLoop != null) gameLoop.play();
 
-        System.out.println("⏩ 觸發進入下一關！");
-          LevelManager.getInstance().advanceToNextLevel();
-          startCountdownTimer();
+            System.out.println("Entering next level");
+            LevelManager.getInstance().advanceToNextLevel();
+            startCountdownTimer();
         }
     }
 
@@ -299,7 +281,7 @@ public class Controller {
         isPaused = !isPaused; // 切換暫停狀態
 
         if (isPaused) {
-            System.out.println("⏸️ 遊戲暫停");
+            System.out.println("The game is halting");
 
             if (gameLoop != null) gameLoop.stop();
             if (countdownTimeline != null) countdownTimeline.stop();
@@ -337,7 +319,7 @@ public class Controller {
                     String bgmImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/NoBGM.png").toExternalForm();
                     bgmImageView.setImage(new Image(bgmImgPath));
                 } catch (Exception e) {
-                    System.err.println("找不到 BGM.png 圖片");
+                    System.err.println("Cannot find the photo");
                 }
             }
         } else {
@@ -348,7 +330,7 @@ public class Controller {
                     String noBgmImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/BGM.png").toExternalForm();
                     bgmImageView.setImage(new Image(noBgmImgPath));
                 } catch (Exception e) {
-                    System.err.println("找不到 NoBGM.png 圖片");
+                    System.err.println("Cannot find the photo");
                 }
             }
         }
@@ -359,25 +341,25 @@ public class Controller {
         isSoundEffectOn = !isSoundEffectOn; // 切換音效開關狀態
 
         if (isSoundEffectOn) {
-            System.out.println("🔊 遊戲音效：開啟");
+            System.out.println("SFX on");
 
             if (soundEffectImageView != null) {
                 try {
                     String effectImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/NoEffect.png").toExternalForm();
                     soundEffectImageView.setImage(new Image(effectImgPath));
                 } catch (Exception e) {
-                    System.err.println("找不到 Effect.png 圖片");
+                    System.err.println("Cannot find the photo");
                 }
             }
         } else {
-            System.out.println("🔇 遊戲音效：靜音");
+            System.out.println("SFX off");
 
             if (soundEffectImageView != null) {
                 try {
                     String noEffectImgPath = getClass().getResource("/program/intro_to_cs_lab_final_project/Icon/Effect.png").toExternalForm();
                     soundEffectImageView.setImage(new Image(noEffectImgPath));
                 } catch (Exception e) {
-                    System.err.println("找不到 NoEffect.png 圖片");
+                    System.err.println("Cannot find the photo");
                 }
             }
         }
