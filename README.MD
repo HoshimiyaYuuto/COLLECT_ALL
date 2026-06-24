@@ -44,9 +44,9 @@
 ### 特別感謝原作者無私分享此 CC0 素材
 
 
-# COLLECT ALL - 2026 Computer Science Laboratory II Final Project -
+# COLLECT ALL - 2026 Introduction to Computer Science Ⅱ Lab Final Project -
 
-This project is the final assignment for Computer Science Laboratory II.
+This project is the final assignment for Introduction to Computer Science Ⅱ Lab.
 It is developed based on **Java 21** and **JavaFX 21**.
 
 ---
